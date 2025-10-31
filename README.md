@@ -27,3 +27,6 @@ npm run dev
 ```sh
 npm run build
 ```
+
+### Demo Url
+https://fhevm-vue.vercel.app/
