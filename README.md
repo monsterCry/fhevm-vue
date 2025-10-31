@@ -1,6 +1,6 @@
 # fhevm-vue
 
-This template should help get you started developing with Vue 3 in Vite.
+A full chain game based on genetic algorithm and fully homomorphic encryption, where players encrypt their attributes and cross use mutation potions with other players to generate new attributes, increasing their chances of winning battles against other players. During this period, users' attributes are fully encrypted, adding fun to the game
 
 ## Recommended IDE Setup
 
