@@ -1,9 +1,9 @@
 export const InventoryAddress = {
     '31337':{
-        address:'0x5e9402218356132bB7d22ED7f8BC68551dD6f9F2'
+        address:'0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9'
     } ,
     '11155111':{
-      address:'0x3b578FeEcAd3Ccc6D5431ac11b07aA16A0274668'
+      address:'0x5e9402218356132bB7d22ED7f8BC68551dD6f9F2'
     }
 }
 export const InventoryABI = {

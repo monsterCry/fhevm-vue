@@ -1,9 +1,9 @@
 export const EvolvAddress = {
     '31337':{
-        address:'0xfcC40F752514C71B348743ee5BaE170df49b2C95'
+        address:'0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
     },
     '11155111':{
-      address:'0xae3193A6D22b8Dc748C83d999590d7937a058e2E'
+      address:'0xfcC40F752514C71B348743ee5BaE170df49b2C95'
     }
 }
 export const EvolvABI = {

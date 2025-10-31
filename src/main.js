@@ -25,9 +25,10 @@ const curNet = {
 // }
 
 
-fhevmMockCreateInstance({
+curNet.instance({
     rpcUrl:curNet.rpcUrl,
-    chainId:curNet.chainId,metadata: curNet.metadata
+    chainId:curNet.chainId,
+    metadata: curNet.metadata
 }).then((instance)=>{
     window.fhevmInstance = instance;
 });

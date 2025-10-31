@@ -53,7 +53,7 @@ let fightRoomContract;
 let counterContract;
 let marketContrat;
 let inventoryContrat;
-console.log(customNetwork.id)
+console.log("+++++", customNetwork.id)
 onMounted(async ()=>{
   await appkit.ready();
   if(appkit.getAddress() == undefined) {
@@ -112,7 +112,7 @@ appkit.subscribeState(async (sta)=>{
    }
 
   //playerlist
-  let playerList = await monsterContract.listMonsters(0,5);
+  let playerList = await monsterContract.listMonsters(0,1);
   console.log('==playerList==>' , playerList[0]);
   for(let i = 0; i < playerList[0].length; i++) {
     console.log('playerList==>' + playerList[1][i]/*,await monsterContract.tokenURI(playerList[1][i])*/);

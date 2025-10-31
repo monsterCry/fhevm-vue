@@ -1,9 +1,9 @@
 export const MinterAddress = {
     '31337':{
-        address:'0x199BE8CBFeA99c88Bbf9A13ae8eEB5A32Cc78187'
+        address:'0x5FC8d32690cc91D4c39d9d3abcBD16989F875707'
     },
     '11155111':{
-      address:'0x0A4Cc9051Fb592d7f8BCf1D3A1698B69e89d0c1C'
+      address:'0x199BE8CBFeA99c88Bbf9A13ae8eEB5A32Cc78187'
     }
 }
 export const MinterABI = {
