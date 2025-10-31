@@ -1,4 +1,3 @@
-import './fhevm/relayer-sdk-js.umd.cjs'
 import { createApp } from 'vue'
 import App from './App.vue'
 
