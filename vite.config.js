@@ -30,6 +30,10 @@ export default defineConfig({
         target: 'https://eth-mainnet.g.alchemy.com',
         changeOrigin: true,
       },
+      '/relayer-sdk-js':{
+        target: 'https://cdn.zama.ai',
+        changeOrigin: true,
+      }
     }
   }
 })

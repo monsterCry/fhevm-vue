@@ -9,7 +9,6 @@
 import { JsonRpcProvider } from "ethers";
 import { MockFhevmInstance } from "@fhevm/mock-utils";
 
-
 import {
   initSDK,
   createInstance,

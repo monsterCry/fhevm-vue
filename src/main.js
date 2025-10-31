@@ -1,5 +1,7 @@
 import { createApp } from 'vue'
 import App from './App.vue'
+
+
 import {fhevmMockCreateInstance,createFHEInstance} from './fhevm/mock/fhevmMock';
 import { createMemoryHistory, createRouter } from 'vue-router'
 
