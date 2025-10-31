@@ -15,6 +15,14 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+    build: {
+    rollupOptions: {
+      input: {
+        main: './index.html',
+        about: './intr.html',
+      }
+    }
+  },
   server: {
     cors: true,
     proxy: {
