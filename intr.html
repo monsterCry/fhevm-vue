@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>The Evolving Monster — Game Introduction</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg-a:#061426; --bg-b:#07263d; --accent:#00f6ff; --accent-2:#6dd3ff; --muted:#9fb6c9;
+    }
+    body{
+      background:
+        radial-gradient(900px 450px at 12% 8%, rgba(6,34,48,0.08), transparent),
+        linear-gradient(180deg,var(--bg-a),var(--bg-b));
+      color:#e6f6ff;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing:antialiased;
+      min-height: 100vh;
+    }
+    h1,h2,h3{ font-family: 'Orbitron', Inter, sans-serif; color:var(--accent-2) }
+    .card{ 
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); 
+      border:1px solid rgba(109,182,210,0.06); 
+      box-shadow: 0 8px 40px rgba(2,10,16,0.6); 
+      border-radius:12px; 
+    }
+    .muted{ color:var(--muted); }
+    .btn-primary{ 
+      background: linear-gradient(90deg,var(--accent),var(--accent-2)); 
+      color:#021220; 
+      padding:0.5rem 0.9rem; 
+      border-radius:0.6rem; 
+      font-weight:700; 
+      transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,246,255,0.3);
+    }
+    .btn-ghost{ 
+      border:1px solid rgba(109,182,210,0.06); 
+      padding:0.45rem 0.75rem; 
+      border-radius:0.6rem; 
+      background:transparent; 
+      color:#e6f6ff; 
+      transition: all 0.3s ease;
+    }
+    .btn-ghost:hover {
+      background: rgba(109,182,210,0.1);
+      border-color: rgba(109,182,210,0.2);
+    }
+    .neon-glow{ filter: drop-shadow(0 10px 26px rgba(0,246,255,0.08)); }
+    
+    .tech-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(0,246,255,0.1), rgba(109,182,210,0.05));
+      border: 1px solid rgba(0,246,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    
+    .feature-card {
+      transition: all 0.3s ease;
+      border: 1px solid rgba(109,182,210,0.1);
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(0,246,255,0.3);
+      box-shadow: 0 10px 30px rgba(0,246,255,0.1);
+    }
+    
+    .timeline-item {
+      position: relative;
+      padding-left: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.5rem;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+    }
+    
+    .timeline-item::after {
+      content: '';
+      position: absolute;
+      left: 5px;
+      top: 1.5rem;
+      bottom: -2rem;
+      width: 2px;
+      background: rgba(0,246,255,0.3);
+    }
+    
+    .timeline-item:last-child::after {
+      display: none;
+    }
+    
+    .scrollbar-custom {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0,246,255,0.3) rgba(2,12,20,0.36);
+    }
+    .scrollbar-custom::-webkit-scrollbar {
+      width: 6px;
+    }
+    .scrollbar-custom::-webkit-scrollbar-track {
+      background: rgba(2,12,20,0.36);
+      border-radius: 3px;
+    }
+    .scrollbar-custom::-webkit-scrollbar-thumb {
+      background: rgba(0,246,255,0.3);
+      border-radius: 3px;
+    }
+    .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+      background: rgba(0,246,255,0.5);
+    }
+
+    /* Footer Styles */
+    .footer {
+      background: linear-gradient(180deg, rgba(6,20,38,0.8), rgba(4,15,29,0.95));
+      border-top: 1px solid rgba(109,182,210,0.1);
+      margin-top: 4rem;
+      padding: 2rem 0 1.5rem;
+    }
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    .footer-section h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: var(--accent-2);
+      font-family: 'Orbitron', sans-serif;
+    }
+    .footer-links {
+      list-style: none;
+      padding: 0;
+    }
+    .footer-links li {
+      margin-bottom: 0.5rem;
+    }
+    .footer-links a {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .footer-links a:hover {
+      color: var(--accent);
+    }
+    .footer-social {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .social-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(109,182,210,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(109,182,210,0.2);
+    }
+    .social-icon:hover {
+      background: rgba(0,246,255,0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,246,255,0.2);
+    }
+    .footer-bottom {
+      border-top: 1px solid rgba(109,182,210,0.1);
+      padding-top: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      color: var(--accent-2);
+    }
+    .footer-legal {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .footer-legal a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: color 0.3s ease;
+    }
+    .footer-legal a:hover {
+      color: var(--accent);
+    }
+
+    @media (max-width:700px){
+      .footer-bottom {
+        flex-direction: column;
+        text-align: center;
+      }
+      .footer-legal {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="max-w-6xl mx-auto p-6 w-full">
+    <!-- Header -->
+    <header class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-3xl">The Evolving Monster<span class="muted text-sm">— Web3 Edition</span></h1>
+        <div class="muted text-sm">blockchain gene exchange game</div>
+      </div>
+      <div class="flex gap-3">
+        <a href="/index.html" class="btn-primary">Start Play</a>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="card p-8 mb-8 text-center">
+      <h2 class="text-4xl mb-4">Web3 gaming experience</h2>
+      <p class="text-xl muted mb-6 max-w-3xl mx-auto">
+        FullChain Game Integrating fully homomorphic encryption, genetic algorithms, and blockchain technology to create a truly secure, fair, and innovative digital biological gene exchange platform
+      </p>
+      <div class="flex justify-center gap-4 flex-wrap">
+        <div class="bg-cyan-900/20 px-4 py-2 rounded-full border border-cyan-500/30">🔐 privacy protection</div>
+        <div class="bg-purple-900/20 px-4 py-2 rounded-full border border-purple-500/30">🧬 Genetic algorithm</div>
+        <div class="bg-blue-900/20 px-4 py-2 rounded-full border border-blue-500/30">⛓️ blockchain</div>
+        <div class="bg-green-900/20 px-4 py-2 rounded-full border border-green-500/30">🎮 Strategy Battle</div>
+      </div>
+    </section>
+
+    <!-- Technology Section -->
+    <section class="mb-12">
+      <h2 class="text-2xl mb-6 text-center">Core Technology Architecture</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- FHE Card -->
+        <div class="card p-6 feature-card">
+          <div class="tech-icon mx-auto">
+            🔐
+          </div>
+          <h3 class="text-xl mb-3 text-center">fully homomorphic encryption </h3>
+          <ul class="space-y-2 muted text-sm">
+            <li>• Fully encrypted storage of player attributes</li>
+            <li>• Perform gene calculation in encrypted state</li>
+            <li>• Prevent attribute leakage and cheating</li>
+          </ul>
+          <div class="mt-4 p-3 bg-cyan-900/20 rounded-lg">
+            <p class="text-xs muted">"Only you can decrypt your genetic data"</p>
+          </div>
+        </div>
+
+        <!-- Genetic Algorithm Card -->
+        <div class="card p-6 feature-card">
+          <div class="tech-icon mx-auto">
+            🧬
+          </div>
+          <h3 class="text-xl mb-3 text-center">Genetic Algorithm</h3>
+          <ul class="space-y-2 muted text-sm">
+            <li>• Based on the principles of real genetics</li>
+            <li>• Gene crossover and mutation mechanisms</li>
+            <li>• Evolutionary Tree and Lineage Tracking</li>
+          </ul>
+          <div class="mt-4 p-3 bg-purple-900/20 rounded-lg">
+            <p class="text-xs muted">"Create unique digital creatures"</p>
+          </div>
+        </div>
+
+        <!-- Blockchain Card -->
+        <div class="card p-6 feature-card">
+          <div class="tech-icon mx-auto">
+            ⛓️
+          </div>
+          <h3 class="text-xl mb-3 text-center">blockchain technology</h3>
+          <ul class="space-y-2 muted text-sm">
+            <li>• Decentralized asset ownership</li>
+            <li>• Transparent and verifiable transaction records</li>
+            <li>• Automated execution of smart contracts</li>
+          </ul>
+          <div class="mt-4 p-3 bg-blue-900/20 rounded-lg">
+            <p class="text-xs muted">"Truly owning your digital assets"</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Gameplay Section -->
+    <section id="play" class="mb-12">
+      <h2 class="text-2xl mb-6 text-center">Gameplay Introduction</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Left Column -->
+        <div class="space-y-6">
+          <div class="card p-6">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-xl">
+                🥚
+              </div>
+              <div>
+                <h3 class="text-lg font-bold">Casting system</h3>
+                <p class="muted text-sm">Each wallet can only mint one unique genetic egg</p>
+              </div>
+            </div>
+            <ul class="space-y-2 text-sm muted">
+              <li>• Randomly generate attack, magic, defense, and energy attributes</li>
+              <li>• Homomorphic encryption protects attribute privacy</li>
+              <li>• Immutable blockchain records</li>
+            </ul>
+          </div>
+
+          <div class="card p-6">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xl">
+                ⚔️
+              </div>
+              <div>
+                <h3 class="text-lg font-bold">Battle arena</h3>
+                <p class="muted text-sm">Attribute based intelligent combat system</p>
+              </div>
+            </div>
+            <ul class="space-y-2 text-sm muted">
+              <li>• Real time battle logs and result recording</li>
+              <li>• Winning or losing affects player ranking</li>
+              <li>• Strategic prop use</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="space-y-6">
+          <div class="card p-6">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center text-xl">
+                💱
+              </div>
+              <div>
+                <h3 class="text-lg font-bold">Gene exchange</h3>
+                <p class="muted text-sm">Revolutionary digital biological reproduction system</p>
+              </div>
+            </div>
+            <ul class="space-y-2 text-sm muted">
+              <li>• Gene fusion with other players</li>
+              <li>• Genetic algorithm generates offspring attributes</li>
+              <li>• ETH Bid and acceptance mechanism</li>
+            </ul>
+          </div>
+
+          <div class="card p-6">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-xl">
+                🧪
+              </div>
+              <div>
+                <h3 class="text-lg font-bold">Material system</h3>
+                <p class="muted text-sm">Enhance your digital biological abilities</p>
+              </div>
+            </div>
+            <ul class="space-y-2 text-sm muted">
+              <li>• Mutation potion: Randomly change attributes</li>
+              <li>• Energy Recovery: Supplement Combat Energy</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Rewards Section -->
+    <section class="mb-12">
+      <h2 class="text-2xl mb-6 text-center">Reward Acquisition System</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="card p-6 text-center feature-card">
+          <div class="text-3xl mb-3">🏆</div>
+          <h3 class="text-lg font-bold mb-2">Battle rewards</h3>
+          <p class="text-sm muted">Gain experience points and rare items by defeating opponents</p>
+          <div class="mt-3 p-2 bg-green-900/20 rounded">
+            <p class="text-xs">The higher the winning rate, the richer the rewards</p>
+          </div>
+        </div>
+
+        <div class="card p-6 text-center feature-card">
+          <div class="text-3xl mb-3">🧬</div>
+          <h3 class="text-lg font-bold mb-2">Genetic discovery</h3>
+          <p class="text-sm muted">Create rare gene combinations to receive special rewards</p>
+          <div class="mt-3 p-2 bg-purple-900/20 rounded">
+            <p class="text-xs">Unique genes=higher value</p>
+          </div>
+        </div>
+
+        <div class="card p-6 text-center feature-card">
+          <div class="text-3xl mb-3">⚡</div>
+          <h3 class="text-lg font-bold mb-2">Activity Reward</h3>
+          <p class="text-sm muted">Daily login and continuous participation to receive rewards</p>
+          <div class="mt-3 p-2 bg-blue-900/20 rounded">
+            <p class="text-xs">Perseverance is strength</p>
+          </div>
+        </div>
+
+        <div class="card p-6 text-center feature-card">
+          <div class="text-3xl mb-3">🎯</div>
+          <h3 class="text-lg font-bold mb-2">Achievement System</h3>
+          <p class="text-sm muted">Unlock exclusive rewards by completing specific goals</p>
+          <div class="mt-3 p-2 bg-yellow-900/20 rounded">
+            <p class="text-xs">Challenge yourself and push your limits</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Future Roadmap -->
+    <section class="mb-12">
+      <h2 class="text-2xl mb-6 text-center">Future Development Roadmap</h2>
+      <div class="card p-8">
+        <div class="max-w-3xl mx-auto">
+          <!-- Phase 1 -->
+          <div class="timeline-item">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="px-3 py-1 bg-green-900/30 text-green-400 rounded-full text-sm">Completed</span>
+              <h3 class="text-lg font-bold">Phase 1: Infrastructure</h3>
+            </div>
+            <p class="muted text-sm mb-3">Establish core game mechanisms and technological foundations</p>
+            <ul class="space-y-1 text-sm muted ml-4">
+              <li>• Egg Casting and Attribute System</li>
+              <li>• Basic combat functions</li>
+              <li>• Gene exchange prototype</li>
+              <li>• Zama Fully homomorphic encryption integration</li>
+            </ul>
+          </div>
+
+          <!-- Phase 2 -->
+          <div class="timeline-item">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="px-3 py-1 bg-blue-900/30 text-blue-400 rounded-full text-sm">In progress</span>
+              <h3 class="text-lg font-bold">Phase 2: Functional improvement</h3>
+            </div>
+            <p class="muted text-sm mb-3">Enhance gaming experience and community functionality</p>
+            <ul class="space-y-1 text-sm muted ml-4">
+              <li>• Advanced Genetic Algorithm Optimization</li>
+              <li>• Community trading market</li>
+              <li>• Cross chain asset support</li>
+            </ul>
+          </div>
+
+          <!-- Phase 3 -->
+          <div class="timeline-item">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="px-3 py-1 bg-purple-900/30 text-purple-400 rounded-full text-sm">under planning</span>
+              <h3 class="text-lg font-bold">Phase Three: Ecological Expansion</h3>
+            </div>
+            <p class="muted text-sm mb-3">Building a complete gaming ecosystem</p>
+            <ul class="space-y-1 text-sm muted ml-4">
+              <li>• Cross game asset interoperability</li>
+            </ul>
+          </div>
+
+          <!-- Phase 4 -->
+          <div class="timeline-item">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="px-3 py-1 bg-yellow-900/30 text-yellow-400 rounded-full text-sm">vision</span>
+              <h3 class="text-lg font-bold">Phase Four: Metaverse Integration</h3>
+            </div>
+            <p class="muted text-sm mb-3">Becoming the digital biological standard of the metaverse</p>
+            <ul class="space-y-1 text-sm muted ml-4">
+              <li>• Full chain game engine</li>
+              <li>• Decentralized Autonomous World</li>
+              <li>• AI Driven evolutionary system</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="text-center mb-12">
+      <div class="card p-8 max-w-2xl mx-auto">
+        <h2 class="text-2xl mb-4">Are you ready to embark on your genetic journey?</h2>
+        <p class="muted mb-6">join FullChain Game，Experience the Charm of Web3 Games力</p>
+        <div class="flex gap-4 justify-center flex-wrap">
+          <a href="index.html" class="btn-primary">Start the game immediately</a>
+          <button class="btn-ghost">Read the white paper</button>
+          <button class="btn-ghost">Join the community</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="footer-grid">
+          <div class="footer-section">
+            <h3>The Evolving Monster</h3>
+            <p class="muted text-sm">A gene exchange game based on Web3 technology. Casting, battling, merging, creating your own unique digital creature.</p>
+            <div class="footer-social">
+              <a href="https://x.com/0x07e" class="social-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
+                </svg>
+              </a>
+              <a href="https://github.com/monsterCry" class="social-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+          <div class="footer-section">
+            <h3>Game Features</h3>
+            <ul class="footer-links">
+              <li><a href="#">🥚 Casting System</a></li>
+              <li><a href="#">⚔️ Battle Arena</a></li>
+              <li><a href="#">💱 Gene Exchange</a></li>
+              <li><a href="#">🔐 Encryption Attribute</a></li>
+              <li><a href="#">🧪 Mutation Potion</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h3>Support and Resources</h3>
+            <ul class="footer-links">
+              <li><a href="#">📖 Game Guide</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <div class="footer-logo">
+            <span>The Evolving Monster</span>
+          </div>
+          <div class="footer-legal">
+            <a href="#">Terms of Service</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Cookie Policy</a>
+            <span class="muted text-sm">© 2023 FullChain Game. All rights reserved.</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

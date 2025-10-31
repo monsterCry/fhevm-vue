@@ -15,4 +15,14 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  server: {
+    cors: true,
+    proxy: {
+      '/nft': {
+        target: 'https://eth-mainnet.g.alchemy.com',
+        changeOrigin: true,
+      },
+    }
+  }
 })
+//https://eth-mainnet.g.alchemy.com/v2/Cso3EZHJ0EjfjzXTU5oISbtOhBkilFRU
