@@ -1,4 +1,4 @@
-import '../node_modules/@zama-fhe/relayer-sdk/bundle/relayer-sdk-js.umd.cjs'
+import './fhevm/relayer-sdk-js.umd.cjs'
 import { createApp } from 'vue'
 import App from './App.vue'
 
