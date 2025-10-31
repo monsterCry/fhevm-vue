@@ -112,7 +112,7 @@ appkit.subscribeState(async (sta)=>{
    }
 
   //playerlist
-  let playerList = await monsterContract.listMonsters(0,1);
+  let playerList = await monsterContract.listMonsters(0,5);
   console.log('==playerList==>' , playerList[0]);
   for(let i = 0; i < playerList[0].length; i++) {
     console.log('playerList==>' + playerList[1][i]/*,await monsterContract.tokenURI(playerList[1][i])*/);
