@@ -1,19 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/zama-api/:path*",
-      "destination": "https://cdn.zama.ai/:path*"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/external-api/:path*",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "https://your-app.vercel.app"
-        }
-      ]
+      "source": "/zama-api/(.*)",
+      "destination": "https://cdn.zama.ai"
     }
   ]
 }
