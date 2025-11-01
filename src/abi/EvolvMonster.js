@@ -431,6 +431,11 @@ export const EvolvABI = {
               "internalType": "address",
               "name": "owner",
               "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
             }
           ],
           "internalType": "struct Property",
@@ -506,16 +511,16 @@ export const EvolvABI = {
               "internalType": "address",
               "name": "owner",
               "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
             }
           ],
           "internalType": "struct Property[]",
           "name": "",
           "type": "tuple[]"
-        },
-        {
-          "internalType": "uint256[]",
-          "name": "",
-          "type": "uint256[]"
         }
       ],
       "stateMutability": "view",
@@ -557,6 +562,11 @@ export const EvolvABI = {
               "internalType": "address",
               "name": "owner",
               "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
             }
           ],
           "internalType": "struct Property[]",
@@ -608,6 +618,11 @@ export const EvolvABI = {
               "internalType": "address",
               "name": "owner",
               "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
             }
           ],
           "internalType": "struct Property[2]",
@@ -897,6 +912,25 @@ export const EvolvABI = {
     {
       "inputs": [
         {
+          "internalType": "bytes32",
+          "name": "data",
+          "type": "bytes32"
+        }
+      ],
+      "name": "toHexString",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "uint256",
           "name": "tokenId",
           "type": "uint256"
@@ -982,6 +1016,11 @@ export const EvolvABI = {
               "internalType": "address",
               "name": "owner",
               "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
             }
           ],
           "internalType": "struct Property",

@@ -9,7 +9,13 @@ export const GeneMarketplaceAddress = {
 export const GeneMarketplaceABI = {
     abi:[
     {
-      "inputs": [],
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_cat",
+          "type": "address"
+        }
+      ],
       "stateMutability": "nonpayable",
       "type": "constructor"
     },

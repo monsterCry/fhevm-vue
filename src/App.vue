@@ -2,7 +2,7 @@
 import { ref,onMounted} from 'vue'
 import { ethers } from 'ethers';
 import { createAppKit,useAppKit,useDisconnect } from '@reown/appkit/vue'
-import { type  AppKitNetwork } from '@reown/appkit/networks'
+import { energy, type  AppKitNetwork } from '@reown/appkit/networks'
 import { EthersAdapter } from "@reown/appkit-adapter-ethers";
 import { sepolia } from "@reown/appkit/networks";
 
@@ -22,7 +22,7 @@ import {InventoryABI,InventoryAddress} from './abi/Inventory';
 
 import {MinterABI,MinterAddress} from './abi/Minter';
 
-const customNetwork = sepolia//defineChain(customNet);
+const customNetwork = sepolia;//defineChain(customNet);
 const projectId = 'a84a612db0164bf224ae42d5da621bb3'
 const metadata = {
   name: 'AppKit',
@@ -60,15 +60,20 @@ onMounted(async ()=>{
   }
 });
 
-const loadProper = async(monster)=>{
-  console.log('loadProper',monster);
-  appData.value.player.hasEgg = monster[3];
-  appData.value.player.encrypt = {
+const loadProper = async(monster,inventory,addr)=>{
+  console.log('loadProper',monster); 
+  appData.value.player = {
+    name: monster[2],
+    hasEgg: monster[3],
+    energy: monster[1],
+    encrypt:{
       attack: monster[0][0],
       magic: monster[0][1],
-      defense: monster[0][2],    
-  };
-  appData.value.player.name = monster[2]  
+      defense: monster[0][2]
+    },
+    inventory: inventory,
+    address:short(addr)
+  }  
 }
 
 appkit.subscribeState(async (sta)=>{
@@ -112,21 +117,24 @@ appkit.subscribeState(async (sta)=>{
 
   //playerlist
   let playerList = await monsterContract.listMonsters(0,5);
-  console.log('==playerList==>' , playerList[0]);
-  for(let i = 0; i < playerList[0].length; i++) {
-    console.log('playerList==>' + playerList[1][i]/*,await monsterContract.tokenURI(playerList[1][i])*/);
-    if(playerList[0][i][4] == wallet) {
+  console.log('==playerList==>' , playerList);
+  for(let i = 0; i < playerList.length; i++) {
+    
+    if(playerList[i][4] == wallet) {
       continue;
     }
+    //let tokenUri = JSON.parse(await monsterContract.tokenURI(playerList[1][i]));
+    //console.log(playerList[i] + 'playerList==>', await monsterContract.tokenURI(playerList[i][5]));
     appData.value.otherPlayers.push({ 
-      id: playerList[1][i], 
-      name: playerList[0][i][2], 
-      attack: 72, 
-      magic: 65, 
-      defense: 58, 
-      energy: 80, 
-      wins: 12, 
-      losses: 5 
+      id: playerList[i][5], 
+      name: playerList[i][2], 
+      attack: 0, 
+      magic: 0, 
+      defense: 0, 
+      energy: playerList[i][1], 
+      wins: 0, 
+      losses: 0,
+      tokenUri: JSON.parse(await monsterContract.tokenURI(playerList[i][5]))
     })
   }
 
@@ -134,26 +142,17 @@ appkit.subscribeState(async (sta)=>{
   console.log('recentPlayerList',recentPlayerList);
   for(let i = 0; i < recentPlayerList.length; i++) {
     appData.value.minted.push({ 
-      id: i + 1, 
+      id: recentPlayerList[i][5], 
       name: recentPlayerList[i][2], 
-      attack: 72, 
-      magic: 65, 
-      defense: 58, 
-      energy: 80, 
-      wins: 12, 
-      losses: 5 
+      attack: 0, 
+      magic: 0, 
+      defense: 0, 
+      energy: recentPlayerList[i][1], 
+      wins: 0, 
+      losses: 0 
     })
   }
   
-  console.log(wallet)
-  let monster = await monsterContract.getProperty(wallet);
-  await loadProper(monster);
-  await monsterContract.on('MonsterMinted', async(e)=>{
-     console.log('monsterContract' , e);
-     monster = await monsterContract.getProperty(wallet);
-     await loadProper(monster);
-   });
-
    await inventoryContrat.on('InventoryMinted',async(e)=>{
      console.log('inventoryContrat' , e);
    })
@@ -164,6 +163,21 @@ appkit.subscribeState(async (sta)=>{
        mutationPotion: mutaionCount,
        energyPotion: recoverCount,
    };
+
+  console.log(wallet)
+  let monster = await monsterContract.getProperty(wallet);
+  await loadProper(monster,{
+    mutationPotion: mutaionCount,
+    energyPotion: recoverCount
+  },wallet);
+  await monsterContract.on('MonsterMinted', async(e)=>{
+     console.log('monsterContract' , e);
+     monster = await monsterContract.getProperty(wallet);
+     await loadProper(monster,{
+        mutationPotion: mutaionCount,
+        energyPotion: recoverCount
+      },wallet);
+   });
 });
 
 
@@ -235,8 +249,8 @@ const disconnectWallet = async() => {
     losses: 0,
     decrypted: false,
     inventory: {
-      mutationPotion: 3,
-      energyPotion: 2
+      mutationPotion: 0,
+      energyPotion: 0
     }
   };
 }
@@ -417,7 +431,9 @@ const checkIn = async()=> {
                     <div>
                       <div class="font-semibold">{{ appData.player.name || 'Player' }}</div>
                       <div class="muted text-xs"></div>
-                      <div class="muted text-xs mt-1">ATK <span class="encrypted">████</span> • MAG <span class="encrypted">████</span> • DEF <span class="encrypted">████</span> • ENG <span class="encrypted">████</span></div>
+                      <div class="muted text-xs mt-1">ATK <span class="encrypted">████</span> • MAG <span class="encrypted">████</span> • DEF <span class="encrypted">████</span>
+                         • ENG <span class="encrypted">{{ appData.player.energy }}</span>
+                        </div>
                     </div>
                   </div>
                   <div class="mt-3 muted text-sm">You have already cast a monster and cannot cast it again.</div>
@@ -439,7 +455,7 @@ const checkIn = async()=> {
                   <div v-html="egg.avatar" class="avatar-svg neon-glow"></div>
                   <div class="flex-1">
                     <div class="font-semibold">{{ egg.name }} <span class="muted text-xs">#{{egg.id}}</span></div>
-                    <div class="muted text-xs">ATK <span class="encrypted">████</span> • MAG <span class="encrypted">████</span> • DEF <span class="encrypted">████</span> • ENG <span class="encrypted">████</span></div>
+                    <div class="muted text-xs">ATK <span class="encrypted">████</span> • MAG <span class="encrypted">████</span> • DEF <span class="encrypted">████</span> • ENG <span class="encrypted">{{egg.energy}}</span></div>
                   </div>
                 </div>
                 <div v-if="appData.minted.length===0" class="muted p-3">No monsters at the moment - click on 'Cast Monster' to start.</div>
@@ -489,7 +505,7 @@ const checkIn = async()=> {
                     <div>Attack (ATK): <span class="encrypted">████</span></div>
                     <div>Magic (MAG): <span class="encrypted">████</span></div>
                     <div>Defense (DEF): <span class="encrypted">████</span></div>
-                    <div>Energy (ENG): <span class="encrypted">████</span></div>
+                    <div>Energy (ENG): <span class="encrypted">{{ appData.player.energy }}</span></div>
                   </div>
                 </div>
                 <div v-else class="muted">There are no monsters yet</div>
@@ -616,7 +632,7 @@ const checkIn = async()=> {
             
             <div class="flex justify-between items-center">
               <span>Energy</span>
-              <span class="encrypted">████</span>
+              <span class="encrypted">{{ appData.player.energy }}</span>
             </div>
           </div>
           
@@ -678,7 +694,7 @@ const checkIn = async()=> {
                 </div>
                 <div class="flex justify-between text-sm">
                   <span>Energy</span>
-                  <span class="encrypted">████</span>
+                  <span class="encrypted">{{ opponent.energy }}</span>
                 </div>
               </div>
 <!--               
@@ -704,7 +720,7 @@ const checkIn = async()=> {
                     <p class="font-bold">{{ otherPlayer.name }}</p>
                     <p class="text-sm text-gray-400">{{ otherPlayer.wins }}WIN - {{ otherPlayer.losses }}LOSE</p>
                     <div class="text-xs mt-1">
-                      Attack:<span class="encrypted">████</span> Magic:<span class="encrypted">████</span> Defense:<span class="encrypted">████</span> Energy:<span class="encrypted">████</span>
+                      Attack:<span class="encrypted">████</span> Magic:<span class="encrypted">████</span> Defense:<span class="encrypted">████</span> Energy:<span class="encrypted">{{ otherPlayer.energy }}</span>
                     </div>
                   </div>
                 </div>
