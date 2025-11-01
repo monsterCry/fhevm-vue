@@ -15,24 +15,12 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
-    build: {
+  build: {
+    assetsInclude: ['**/*.js', '**/*.json', '**/*.html'],
     rollupOptions: {
       input: {
         main: './index.html',
         about: './intr.html',
-      }
-    }
-  },
-  server: {
-    cors: true,
-    proxy: {
-      '/nft': {
-        target: 'https://eth-mainnet.g.alchemy.com',
-        changeOrigin: true,
-      },
-      '/relayer-sdk-js':{
-        target: 'https://cdn.zama.ai',
-        changeOrigin: true,
       }
     }
   }
