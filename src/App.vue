@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ref,onMounted} from 'vue'
-import axios from 'axios';
+import { ethers } from 'ethers';
 import { createAppKit,useAppKit,useDisconnect } from '@reown/appkit/vue'
 import { type  AppKitNetwork } from '@reown/appkit/networks'
 import { EthersAdapter } from "@reown/appkit-adapter-ethers";
@@ -22,7 +22,7 @@ import {InventoryABI,InventoryAddress} from './abi/Inventory';
 
 import {MinterABI,MinterAddress} from './abi/Minter';
 
-const customNetwork = sepolia;//defineChain(customNet);
+const customNetwork = sepolia//defineChain(customNet);
 const projectId = 'a84a612db0164bf224ae42d5da621bb3'
 const metadata = {
   name: 'AppKit',
@@ -53,7 +53,6 @@ let fightRoomContract;
 let counterContract;
 let marketContrat;
 let inventoryContrat;
-console.log("+++++", customNetwork.id)
 onMounted(async ()=>{
   await appkit.ready();
   if(appkit.getAddress() == undefined) {
@@ -63,7 +62,7 @@ onMounted(async ()=>{
 
 const loadProper = async(monster)=>{
   console.log('loadProper',monster);
-  appData.value.player.hasEgg = true/*monster[3]*/;
+  appData.value.player.hasEgg = monster[3];
   appData.value.player.encrypt = {
       attack: monster[0][0],
       magic: monster[0][1],
@@ -90,7 +89,7 @@ appkit.subscribeState(async (sta)=>{
   if (appData.value.player.nameInput) {
     appData.value.player.name = appData.value.player.nameInput;
   }
-  
+  console.log(customNetwork.id)
   minterContract = new Contract(MinterAddress[customNetwork.id + ''].address, MinterABI.abi, signer);
   monsterContract = new Contract(EvolvAddress[customNetwork.id + ''].address, EvolvABI.abi, signer);
   fightRoomContract = new Contract(FightingRoomAddress[customNetwork.id + ''].address, FightingRoomABI.abi, signer);
@@ -116,10 +115,12 @@ appkit.subscribeState(async (sta)=>{
   console.log('==playerList==>' , playerList[0]);
   for(let i = 0; i < playerList[0].length; i++) {
     console.log('playerList==>' + playerList[1][i]/*,await monsterContract.tokenURI(playerList[1][i])*/);
-
+    if(playerList[0][i][4] == wallet) {
+      continue;
+    }
     appData.value.otherPlayers.push({ 
       id: playerList[1][i], 
-      name: playerList[0][i][3], 
+      name: playerList[0][i][2], 
       attack: 72, 
       magic: 65, 
       defense: 58, 
@@ -133,8 +134,8 @@ appkit.subscribeState(async (sta)=>{
   console.log('recentPlayerList',recentPlayerList);
   for(let i = 0; i < recentPlayerList.length; i++) {
     appData.value.minted.push({ 
-      id: '0xAAA111', 
-      name: 'NeonNinja', 
+      id: i + 1, 
+      name: recentPlayerList[i][2], 
       attack: 72, 
       magic: 65, 
       defense: 58, 
@@ -285,15 +286,11 @@ const battle = async (opponent)=> {
   // }
   console.log(opponent);
   appData.value.battleInProgress = true;
-  let dst  = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
-  if(customNet.id == 11155111) {
-    dst  = '0x2b090b06e8987d215643cb2450f60640fe0079cf'
-  }
-  let scaore = await fightRoomContract.getFightScore(dst);
-  console.log(scaore)
-  await fightRoomContract.attack(dst);
-  scaore = await fightRoomContract.getFightScore(signer.address);
-  console.log(scaore)
+  // let scaore = await fightRoomContract.getFightScore(dst);
+  // console.log(scaore)
+  await fightRoomContract.attack(opponent.id);
+  // scaore = await fightRoomContract.getFightScore(signer.address);
+  // console.log(scaore)
 }
 
 const useMutationPotion = async()=> {
@@ -336,8 +333,11 @@ const makeOffer = async()=> {
   if (!appData.value.selectedPlayer) {
     return;
   }
-  console.log(appData.value.selectedPlayer);
-  let tx = await marketContrat.makeCrossOverRequest(1);
+  console.log(appData.value.selectedPlayer.id);
+  let tx = await marketContrat
+    .makeCrossOverRequest(appData.value.selectedPlayer.id,{
+            value: ethers.parseEther(appData.value.offerAmount + '')
+  });
   appData.value.showOfferModal = false;
   appData.value.showDNAAnimation = true;
   // appData.value.fusionPartner = appData.value.selectedPlayer.name;
@@ -658,7 +658,7 @@ const checkIn = async()=> {
                   <div :style="{backgroundImage:'url(../../public/game.png)'}" ></div>
                 </div>
                 <div>
-                  <p class="font-bold">Player#{{ opponent.tokenId  }}</p>
+                  <p class="font-bold">{{ opponent.name  }}</p>
                   <p class="text-sm text-gray-400">{{ opponent.wins }}胜 - {{ opponent.losses }}负</p>
                 </div>
               </div>

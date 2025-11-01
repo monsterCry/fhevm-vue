@@ -3,7 +3,7 @@ export const GeneMarketplaceAddress = {
         address:'0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0'
     },
     '11155111':{
-      address:'0x304EEDB438F628a89fB5dB23c042911DCb3D8290'
+      address:'0x324B0a05729a511C3b09F1917b7F3302aA01Ed41'
     }
 }
 export const GeneMarketplaceABI = {

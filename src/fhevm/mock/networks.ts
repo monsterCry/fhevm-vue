@@ -6,7 +6,7 @@ export const customNet = {
   nativeCurrency: { name: 'Example', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
     default: {
-      http: ['http://127.0.0.1:8545'],
+      http: ['http://localhost:8545'],
     },
   },
   blockExplorers: {

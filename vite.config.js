@@ -25,4 +25,3 @@ export default defineConfig({
     }
   }
 })
-//https://eth-mainnet.g.alchemy.com/v2/Cso3EZHJ0EjfjzXTU5oISbtOhBkilFRU
