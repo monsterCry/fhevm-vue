@@ -3,7 +3,7 @@ export const FightingRoomAddress = {
         address:'0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9'
     },
     '11155111':{
-      address:'0xB653E9B40deE80b6417Ae0b1fc7290Fd4DfFc508'
+      address:'0x2E2E2f65c2001Ab8343404d79Dc5ae26ceCa35Aa'
     }
 }
 export const FightingRoomABI = {
