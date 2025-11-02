@@ -278,7 +278,7 @@ const mintEgg = async(name) => {
 const toggleDecrypt = async()=>{
   let monster = appData.value.player.encrypt;
   console.log(monster);
-  const props = await fheUserDeccrypt(window.fhevmInstance, EvolvAddress['31337'].address,[
+  const props = await fheUserDeccrypt(window.fhevmInstance, EvolvAddress[customNetwork.id + ''].address,[
     monster?.attack,
     monster?.magic,
     monster?.defense
