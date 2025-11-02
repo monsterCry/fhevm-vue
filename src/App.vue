@@ -66,6 +66,7 @@ const loadProper = async(monster,inventory,addr)=>{
     name: monster[2],
     hasEgg: monster[3],
     energy: monster[1],
+    tokenUri: JSON.parse(await monsterContract.tokenURI(monster[5])),
     encrypt:{
       attack: monster[0][0],
       magic: monster[0][1],
@@ -108,11 +109,11 @@ appkit.subscribeState(async (sta)=>{
   console.log('offer', offer)
 
   for(let i = 0; i < poffer.length; i++) {
-     appData.value.otherPlayers.push({ id: 1, bidder: '0xAAA111', amount: 1.5, ts: Date.now() - 3600000, status: 'open', partnerAvatar: '' })
+     appData.value.inboxBids.push({ id: 1, bidder: '0xAAA111', amount: 1.5, ts: Date.now() - 3600000, status: 'open', partnerAvatar: '' })
    }
 
    for(let i = 0; i < offer.length; i++) {
-     appData.value.otherPlayers.push({ id: 1, listingOwner: '0xBBB222', amount: 1.2, ts: Date.now() - 1800000, status: 'open' })
+     appData.value.myOutboundBids.push({ id: 1, listingOwner: '0xBBB222', amount: 1.2, ts: Date.now() - 1800000, status: 'open' })
    }
 
   //playerlist
@@ -149,7 +150,8 @@ appkit.subscribeState(async (sta)=>{
       defense: 0, 
       energy: recentPlayerList[i][1], 
       wins: 0, 
-      losses: 0 
+      losses: 0 ,
+      tokenUri: JSON.parse(await monsterContract.tokenURI(recentPlayerList[i][5]))
     })
   }
   
@@ -178,6 +180,9 @@ appkit.subscribeState(async (sta)=>{
         energyPotion: recoverCount
       },wallet);
    });
+
+   let scaore = await fightRoomContract.getFightScore(wallet);
+   console.log(scaore)
 });
 
 
@@ -194,14 +199,14 @@ const appData = ref({
       magic: 0,
       defense: 0,
       energy: 0,
-      rarity: '',
       wins: 0,
       losses: 0,
       decrypted: false,
       inventory: {
         mutationPotion: 3,
         energyPotion: 2,
-      }
+      },
+      tokenUri:{}
     },
     minted: [
     ],
@@ -221,7 +226,8 @@ const appData = ref({
     showDNAAnimation: false,
     showNewEggModal: false,
     fusionPartner: '',
-    newEgg: {}
+    newEgg: {},
+
  });
 
  const short = (addr)=>{
@@ -244,7 +250,6 @@ const disconnectWallet = async() => {
     magic: 0,
     defense: 0,
     energy: 0,
-    rarity: '',
     wins: 0,
     losses: 0,
     decrypted: false,
@@ -290,14 +295,14 @@ const toggleDecrypt = async()=>{
 };
 
 const battle = async (opponent)=> {
-  // if (!appData.value.player.hasEgg) {
-  //   appData.value.battleLog.unshift({
-  //     message: '没有蛋无法战斗！',
-  //     details: '请先铸造一个蛋开始战斗',
-  //     type: 'info'
-  //   });
-  //   return;
-  // }
+  if (!appData.value.player.hasEgg) {
+    appData.value.battleLog.unshift({
+      message: 'Please Mint Monster first！',
+      details: 'Please Mint Monster to Start Fight',
+      type: 'info'
+    });
+    return;
+  }
   console.log(opponent);
   appData.value.battleInProgress = true;
   // let scaore = await fightRoomContract.getFightScore(dst);
@@ -427,7 +432,9 @@ const checkIn = async()=> {
               <div class="mt-2">
                 <template v-if="appData.player.hasEgg">
                   <div class="p-3 card rounded flex items-center gap-3">
-                    <div class="avatar-svg neon-glow"></div>
+                    <div class="avatar-svg neon-glow">
+                      <img :src="appData.player?.tokenUri?.image"/>
+                    </div>
                     <div>
                       <div class="font-semibold">{{ appData.player.name || 'Player' }}</div>
                       <div class="muted text-xs"></div>
@@ -452,7 +459,9 @@ const checkIn = async()=> {
               <div class="muted text-xs">Recently cast</div>
               <div class="mt-3 space-y-2 scrollbar-custom max-h-80 overflow-y-auto">
                 <div v-for="egg in appData.minted" :key="egg.id" class="flex items-center gap-3 p-2 card rounded">
-                  <div v-html="egg.avatar" class="avatar-svg neon-glow"></div>
+                  <div class="avatar-svg neon-glow">
+                      <img :src="egg.tokenUri.image"/>
+                  </div>
                   <div class="flex-1">
                     <div class="font-semibold">{{ egg.name }} <span class="muted text-xs">#{{egg.id}}</span></div>
                     <div class="muted text-xs">ATK <span class="encrypted">████</span> • MAG <span class="encrypted">████</span> • DEF <span class="encrypted">████</span> • ENG <span class="encrypted">{{egg.energy}}</span></div>
@@ -473,7 +482,11 @@ const checkIn = async()=> {
 
           <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="p-3 rounded">
-              <div class="muted text-xs">avatar</div>
+              <div class="muted text-xs">
+                <div class="user-avatar-svg neon-glow">
+                  <img :src="appData.player.tokenUri?.image"/>
+                </div>
+              </div>
               <div class="mt-2">
                 <div v-if="appData.player.address" class="avatar-svg neon-glow"></div>
                 <div v-else class="muted">Not connected</div>
@@ -608,7 +621,7 @@ const checkIn = async()=> {
       <div v-if="appData.activeTab === 'battle'" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Player Card -->
         <div class="card p-6">
-          <h3 class="text-lg mb-4 text-center">Your state</h3>
+          <h3 class="text-lg mb-4 text-center">My State</h3>
           
           <div class="flex justify-center mb-4">
             <div v-if="appData.player.address" class="avatar-svg neon-glow w-24 h-24"></div>
@@ -671,7 +684,8 @@ const checkIn = async()=> {
             <div v-for="opponent in appData.otherPlayers" :key="opponent.id" class="card p-4 grid-card">
               <div class="flex items-center space-x-4 mb-4">
                 <div class="avatar-svg w-12 h-12">
-                  <div :style="{backgroundImage:'url(../../public/game.png)'}" ></div>
+                  <img :src="opponent.tokenUri?.image"/>
+                  <!-- <div :style="{backgroundImage:'url(../../public/game.png)'}" ></div> -->
                 </div>
                 <div>
                   <p class="font-bold">{{ opponent.name  }}</p>
@@ -715,7 +729,9 @@ const checkIn = async()=> {
             <div v-for="otherPlayer in appData.otherPlayers" :key="otherPlayer.id" class="p-4 bg-gray-800/30 rounded-lg">
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                  <div  class="avatar-svg w-12 h-12"></div>
+                  <div class="avatar-svg w-12 h-12">
+                    <img :src="otherPlayer.tokenUri?.image"/>
+                  </div>
                   <div>
                     <p class="font-bold">{{ otherPlayer.name }}</p>
                     <p class="text-sm text-gray-400">{{ otherPlayer.wins }}WIN - {{ otherPlayer.losses }}LOSE</p>
@@ -918,6 +934,7 @@ const checkIn = async()=> {
     }
     .muted{ color:var(--muted); }
     .avatar-svg{ width:72px; height:72px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; overflow:hidden; }
+    .user-avatar-svg{border-radius:999px; display:inline-flex; align-items:center; justify-content:center; overflow:hidden; }
     .btn-primary{ 
       background: linear-gradient(90deg,var(--accent),var(--accent-2)); 
       color:#021220; 
