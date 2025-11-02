@@ -109,18 +109,31 @@ appkit.subscribeState(async (sta)=>{
   console.log('offer', offer)
 
   for(let i = 0; i < poffer.length; i++) {
-     appData.value.inboxBids.push({ id: 1, bidder: '0xAAA111', amount: 1.5, ts: Date.now() - 3600000, status: 'open', partnerAvatar: '' })
+     appData.value.inboxBids.push({ 
+      id: poffer[i][5], 
+      bidder: poffer[i][0], 
+      amount: ethers.formatEther(poffer[i][3] + ''), 
+      ts: Date.now() - 3600000, 
+      status: poffer[i][4] == 0?'open':'close', 
+      partnerAvatar: '' 
+    })
    }
 
    for(let i = 0; i < offer.length; i++) {
-     appData.value.myOutboundBids.push({ id: 1, listingOwner: '0xBBB222', amount: 1.2, ts: Date.now() - 1800000, status: 'open' })
+     appData.value.myOutboundBids.push({ 
+      id: offer[i][5], 
+      bidder: offer[i][2], 
+      amount: ethers.formatEther(offer[i][3] + ''), 
+      ts: Date.now() - 3600000, 
+      status: offer[i][4] == 0?'open':'close', 
+      partnerAvatar: '' 
+    })
    }
 
   //playerlist
   let playerList = await monsterContract.listMonsters(0,5);
   console.log('==playerList==>' , playerList);
   for(let i = 0; i < playerList.length; i++) {
-    
     if(playerList[i][4] == wallet) {
       continue;
     }
@@ -583,7 +596,7 @@ const checkIn = async()=> {
                 <div v-for="b in appData.inboxBids" :key="b.id" class="card p-3 rounded flex items-start gap-3">
                   <div v-html="b.partnerAvatar" class="avatar-svg neon-glow"></div>
                   <div class="flex-1">
-                    <div class="font-semibold">{{ short(b.bidder) }} Propose <strong>{{ b.amount.toFixed(3) }} ETH</strong></div>
+                    <div class="font-semibold">{{ short(b.bidder) }} Propose <strong>{{ b.amount }} ETH</strong></div>
                     <div class="muted text-xs">Time：{{ new Date(b.ts).toLocaleString() }}</div>
                     <div class="muted text-xs mt-1">Status：{{ b.status }}</div>
                   </div>
@@ -601,7 +614,7 @@ const checkIn = async()=> {
                 <div v-for="b in appData.myOutboundBids" :key="b.id" class="card p-3 rounded flex items-start gap-3">
                   <div class="avatar-svg neon-glow"></div>
                   <div class="flex-1">
-                    <div class="font-semibold">For {{ nameFor(b.listingOwner) }} Bid <strong>{{ b.amount.toFixed(3) }} ETH</strong></div>
+                    <div class="font-semibold">For {{ nameFor(b.listingOwner) }} Bid <strong>{{ b.amount }} ETH</strong></div>
                     <div class="muted text-xs">Time：{{ new Date(b.ts).toLocaleString() }}</div>
                     <div class="muted text-xs mt-1">Status：{{ b.status }}</div>
                   </div>
@@ -624,7 +637,9 @@ const checkIn = async()=> {
           <h3 class="text-lg mb-4 text-center">My State</h3>
           
           <div class="flex justify-center mb-4">
-            <div v-if="appData.player.address" class="avatar-svg neon-glow w-24 h-24"></div>
+            <div v-if="appData.player.address" class="avatar-svg neon-glow w-24 h-24">
+              <img :src="appData.player.tokenUri?.image"/>
+            </div>
           </div>
           
           <div class="space-y-3 mb-4">
