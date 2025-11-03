@@ -3,7 +3,7 @@ export const EvolvAddress = {
       address:'0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
     },
     '11155111':{
-      address:'0xc1A22f416fAc8125579f910a66bba6aa3cC24dA2'
+      address:'0xA56048ddd7fcaEf402aBBB032780d08AF9a30f66'
     }
 }
 export const EvolvABI = {
@@ -374,6 +374,24 @@ export const EvolvABI = {
         }
       ],
       "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_toAddr",
+          "type": "address"
+        },
+        {
+          "internalType": "uint64",
+          "name": "_val",
+          "type": "uint64"
+        }
+      ],
+      "name": "decreseEnergy",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {

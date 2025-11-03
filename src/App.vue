@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import { ref,onMounted} from 'vue'
 import { ethers } from 'ethers';
+import LoadingLayer from './component/LoadingLayer.vue'
+import ErrorLayer from './component/ErrorLayer.vue';
 import { createAppKit,useAppKit,useDisconnect } from '@reown/appkit/vue'
 import { energy, type  AppKitNetwork } from '@reown/appkit/networks'
 import { EthersAdapter } from "@reown/appkit-adapter-ethers";
@@ -22,12 +24,12 @@ import {InventoryABI,InventoryAddress} from './abi/Inventory';
 
 import {MinterABI,MinterAddress} from './abi/Minter';
 
-const customNetwork = sepolia;//defineChain(customNet);
+const customNetwork = sepolia//defineChain(customNet);
 const projectId = 'a84a612db0164bf224ae42d5da621bb3'
 const metadata = {
   name: 'AppKit',
-  description: 'AppKit Example',
-  url: 'https://example.com', // origin must match your domain & subdomain
+  description: 'The Evolving Monster',
+  url: 'https://fhevm-vue.vercel.app/', // origin must match your domain & subdomain
   icons: ['https://avatars.githubusercontent.com/u/179229932']
 }
 const networks: [AppKitNetwork, ...AppKitNetwork[]] = [customNetwork]
@@ -61,7 +63,14 @@ onMounted(async ()=>{
 });
 
 const loadProper = async(monster,inventory,addr)=>{
-  console.log('loadProper',monster); 
+  console.log('loadProper',monster);
+  if(!monster[3]) {
+    appData.value.player = {
+        inventory: inventory,
+        address:short(addr)
+    }
+    return;
+  } 
   appData.value.player = {
     name: monster[2],
     hasEgg: monster[3],
@@ -79,124 +88,160 @@ const loadProper = async(monster,inventory,addr)=>{
 
 appkit.subscribeState(async (sta)=>{
 
-  if(!sta.initialized) {
-    return;
+  try {
+    if(!sta.initialized) {
+        return;
+      }
+      const { walletProvider } = useAppKitProvider("eip155");
+      if(walletProvider == undefined) {
+        return;
+      }
+
+      const ethersProvider = new BrowserProvider(walletProvider);
+      signer = await ethersProvider.getSigner(); 
+      let wallet = signer.address;
+      appData.value.player.address = short(wallet);
+      
+      if (appData.value.player.nameInput) {
+        appData.value.player.name = appData.value.player.nameInput;
+      }
+      console.log(customNetwork.id)
+      minterContract = new Contract(MinterAddress[customNetwork.id + ''].address, MinterABI.abi, signer);
+      monsterContract = new Contract(EvolvAddress[customNetwork.id + ''].address, EvolvABI.abi, signer);
+      fightRoomContract = new Contract(FightingRoomAddress[customNetwork.id + ''].address, FightingRoomABI.abi, signer);
+      counterContract = new Contract(CountAddress[customNetwork.id + ''].address, CountABI.abi, signer);
+      marketContrat = new Contract(GeneMarketplaceAddress[customNetwork.id + ''].address, GeneMarketplaceABI.abi, signer);
+      inventoryContrat = new Contract(InventoryAddress[customNetwork.id + ''].address, InventoryABI.abi, signer);
+
+      showLoading('Loading Game Data...');
+
+      let poffer = await marketContrat.palyerOffers(0);
+      let offer = await marketContrat.palyerOwnerOffers(0);
+      console.log('poffer',poffer)
+      console.log('offer', offer)
+
+      for(let i = 0; i < poffer.length; i++) {
+        appData.value.inboxBids.push({ 
+          id: poffer[i][5], 
+          bidder: poffer[i][0], 
+          amount: ethers.formatEther(poffer[i][3] + ''), 
+          ts: Date.now() - 3600000, 
+          status: poffer[i][4] == 0?'open':'close', 
+          partnerAvatar: '' 
+        })
+      }
+
+      for(let i = 0; i < offer.length; i++) {
+        appData.value.myOutboundBids.push({ 
+          id: offer[i][5], 
+          bidder: offer[i][2], 
+          amount: ethers.formatEther(offer[i][3] + ''), 
+          ts: Date.now() - 3600000, 
+          status: offer[i][4] == 0?'open':'close', 
+          partnerAvatar: '' 
+        })
+      }
+
+      //playerlist
+      let playerList = await monsterContract.listMonsters(0,5);
+      console.log('==playerList==>' , playerList);
+      for(let i = 0; i < playerList.length; i++) {
+        if(playerList[i][4] == wallet) {
+          continue;
+        }
+        appData.value.otherPlayers.push({ 
+          id: playerList[i][5], 
+          name: playerList[i][2], 
+          attack: 0, 
+          magic: 0, 
+          defense: 0, 
+          energy: playerList[i][1], 
+          wins: 0, 
+          losses: 0,
+          tokenUri: JSON.parse(await monsterContract.tokenURI(playerList[i][5]))
+        })
+      }
+
+      let recentPlayerList = await monsterContract.listRecentMinted(2);
+      console.log('recentPlayerList',recentPlayerList);
+      for(let i = 0; i < recentPlayerList.length; i++) {
+        if(!recentPlayerList[i][3]) {
+          continue;
+        }
+        appData.value.minted.push({ 
+          id: recentPlayerList[i][5], 
+          name: recentPlayerList[i][2], 
+          attack: 0, 
+          magic: 0, 
+          defense: 0, 
+          energy: recentPlayerList[i][1], 
+          wins: 0, 
+          losses: 0 ,
+          tokenUri: JSON.parse(await monsterContract.tokenURI(recentPlayerList[i][5]))
+        })
+      }
+      
+      await inventoryContrat.on('InventoryMinted',async(e)=>{
+        console.log('inventoryContrat' , e);
+      })
+
+      
+      let monster = await monsterContract.getProperty(wallet);
+      let inventory = {
+        mutationPotion: [],
+        energyPotion: []
+      }
+      if(monster[3]) {
+        let scaore = await fightRoomContract.getFightScore(wallet);
+        const fights = await fightRoomContract.loadAttacks(wallet);
+        console.log('fight',fights)
+        for(let i = 0; i < fights.length; i++) {
+          appData.value.battleLog.push({
+                message: `${short(fights[i][0])} vs ${short(fights[i][1])}`,
+                details: fights[i][3]?(fights[i][2]?'win':'lose'):'pendding',
+                //type: fights[i][3]?(fights[i][2]?'win':'lose'):'pendding'
+              })
+        }
+
+        console.log(await inventoryContrat.balanceOf(wallet))
+        let mantaCount = await inventoryContrat.balanceOfType(wallet);
+        console.log(mantaCount)
+        for(let i = 0; i < mantaCount.length; i++) {
+          if(mantaCount[i][0] == 1) {
+            inventory.mutationPotion.push(mantaCount[i][1]);
+          } else if(mantaCount[i][0] == 2) {
+            inventory.energyPotion.push(mantaCount[i][1]);
+          }
+        }
+        console.log(inventory)
+        appData.value.player.inventory = inventory;
+      }
+
+      await loadProper(monster,inventory,wallet);
+      await monsterContract.on('MonsterMinted', async(e)=>{
+        console.log('monsterContract' , e);
+        monster = await monsterContract.getProperty(wallet);
+        await loadProper(monster,inventory,wallet);
+      });
+
+      let scaore = await fightRoomContract.getFightScore(wallet);
+      console.log(scaore)
+      hideLoading();
+  } catch(e) {
+    triggerError(e)
+    hideLoading();
   }
-  const { walletProvider } = useAppKitProvider("eip155");
-  if(walletProvider == undefined) {
-    return;
-  }
-
-  const ethersProvider = new BrowserProvider(walletProvider);
-  signer = await ethersProvider.getSigner(); 
-  let wallet = signer.address;
-  appData.value.player.address = short(wallet);
-  
-  if (appData.value.player.nameInput) {
-    appData.value.player.name = appData.value.player.nameInput;
-  }
-  console.log(customNetwork.id)
-  minterContract = new Contract(MinterAddress[customNetwork.id + ''].address, MinterABI.abi, signer);
-  monsterContract = new Contract(EvolvAddress[customNetwork.id + ''].address, EvolvABI.abi, signer);
-  fightRoomContract = new Contract(FightingRoomAddress[customNetwork.id + ''].address, FightingRoomABI.abi, signer);
-  counterContract = new Contract(CountAddress[customNetwork.id + ''].address, CountABI.abi, signer);
-  marketContrat = new Contract(GeneMarketplaceAddress[customNetwork.id + ''].address, GeneMarketplaceABI.abi, signer);
-  inventoryContrat = new Contract(InventoryAddress[customNetwork.id + ''].address, InventoryABI.abi, signer);
-
-  let poffer = await marketContrat.palyerOffers(0);
-  let offer = await marketContrat.palyerOwnerOffers(0);
-  console.log('poffer',poffer)
-  console.log('offer', offer)
-
-  for(let i = 0; i < poffer.length; i++) {
-     appData.value.inboxBids.push({ 
-      id: poffer[i][5], 
-      bidder: poffer[i][0], 
-      amount: ethers.formatEther(poffer[i][3] + ''), 
-      ts: Date.now() - 3600000, 
-      status: poffer[i][4] == 0?'open':'close', 
-      partnerAvatar: '' 
-    })
-   }
-
-   for(let i = 0; i < offer.length; i++) {
-     appData.value.myOutboundBids.push({ 
-      id: offer[i][5], 
-      bidder: offer[i][2], 
-      amount: ethers.formatEther(offer[i][3] + ''), 
-      ts: Date.now() - 3600000, 
-      status: offer[i][4] == 0?'open':'close', 
-      partnerAvatar: '' 
-    })
-   }
-
-  //playerlist
-  let playerList = await monsterContract.listMonsters(0,5);
-  console.log('==playerList==>' , playerList);
-  for(let i = 0; i < playerList.length; i++) {
-    if(playerList[i][4] == wallet) {
-      continue;
-    }
-    //let tokenUri = JSON.parse(await monsterContract.tokenURI(playerList[1][i]));
-    //console.log(playerList[i] + 'playerList==>', await monsterContract.tokenURI(playerList[i][5]));
-    appData.value.otherPlayers.push({ 
-      id: playerList[i][5], 
-      name: playerList[i][2], 
-      attack: 0, 
-      magic: 0, 
-      defense: 0, 
-      energy: playerList[i][1], 
-      wins: 0, 
-      losses: 0,
-      tokenUri: JSON.parse(await monsterContract.tokenURI(playerList[i][5]))
-    })
-  }
-
-  let recentPlayerList = await monsterContract.listRecentMinted(2);
-  console.log('recentPlayerList',recentPlayerList);
-  for(let i = 0; i < recentPlayerList.length; i++) {
-    appData.value.minted.push({ 
-      id: recentPlayerList[i][5], 
-      name: recentPlayerList[i][2], 
-      attack: 0, 
-      magic: 0, 
-      defense: 0, 
-      energy: recentPlayerList[i][1], 
-      wins: 0, 
-      losses: 0 ,
-      tokenUri: JSON.parse(await monsterContract.tokenURI(recentPlayerList[i][5]))
-    })
-  }
-  
-   await inventoryContrat.on('InventoryMinted',async(e)=>{
-     console.log('inventoryContrat' , e);
-   })
-
-   let mutaionCount = await inventoryContrat.balanceOfType(wallet,1);
-   let recoverCount = await inventoryContrat.balanceOfType(wallet,2);
-   appData.value.player.inventory = {
-       mutationPotion: mutaionCount,
-       energyPotion: recoverCount,
-   };
-
-  console.log(wallet)
-  let monster = await monsterContract.getProperty(wallet);
-  await loadProper(monster,{
-    mutationPotion: mutaionCount,
-    energyPotion: recoverCount
-  },wallet);
-  await monsterContract.on('MonsterMinted', async(e)=>{
-     console.log('monsterContract' , e);
-     monster = await monsterContract.getProperty(wallet);
-     await loadProper(monster,{
-        mutationPotion: mutaionCount,
-        energyPotion: recoverCount
-      },wallet);
-   });
-
-   let scaore = await fightRoomContract.getFightScore(wallet);
-   console.log(scaore)
 });
+
+const showLoading = (msg)=>{
+  appData.value.loading.loading = true
+  appData.value.loading.status = msg
+}
+
+const hideLoading = ()=>{
+  appData.value.loading.loading = false
+  appData.value.loading.status = ''
+}
 
 
 const appData = ref({
@@ -216,8 +261,8 @@ const appData = ref({
       losses: 0,
       decrypted: false,
       inventory: {
-        mutationPotion: 3,
-        energyPotion: 2,
+        mutationPotion: [],
+        energyPotion: [],
       },
       tokenUri:{}
     },
@@ -240,6 +285,14 @@ const appData = ref({
     showNewEggModal: false,
     fusionPartner: '',
     newEgg: {},
+    loading:{
+      loading:false,
+      status:''
+    },
+    errorLayer:{
+      showError:false,
+      errorMsg:''
+    }
 
  });
 
@@ -267,8 +320,8 @@ const disconnectWallet = async() => {
     losses: 0,
     decrypted: false,
     inventory: {
-      mutationPotion: 0,
-      energyPotion: 0
+      mutationPotion: [],
+      energyPotion: []
     }
   };
 }
@@ -287,24 +340,49 @@ const nameFor = (addr) => {
   return p ? p.name : (addr ? short(addr) : '—');
 }
 
+const loadProperty = async()=>{
+  let wallet = appData.value.player.address
+  let monster = await monsterContract.getProperty(wallet);
+  await loadProper(monster,appData.value.player.inventory,wallet);
+}
+
 const mintEgg = async(name) => {
-  let tx = await minterContract.mintMonsterEgg(name);
-  await tx.wait();
-  console.log(tx.hash)
+  try {
+    showLoading('Minting...');
+    let tx = await minterContract.mintMonsterEgg(name,{
+      value: ethers.parseEther('0.0001')
+    });
+    await tx.wait();
+    //console.log(tx.hash)
+    hideLoading();
+    showLoading('Loading Data...');
+    loadProperty();
+    hideLoading();
+  } catch(e) {
+    triggerError(e)
+    hideLoading();
+  }
 };
 
 const toggleDecrypt = async()=>{
-  let monster = appData.value.player.encrypt;
-  console.log(monster);
-  const props = await fheUserDeccrypt(window.fhevmInstance, EvolvAddress[customNetwork.id + ''].address,[
-    monster?.attack,
-    monster?.magic,
-    monster?.defense
-  ],signer);
-  appData.value.player.attack = props[0];
-  appData.value.player.magic = props[1];
-  appData.value.player.defense = props[2];
-  appData.value.player.decrypted = true;
+  try {
+    showLoading('Decrypting...');
+    let monster = appData.value.player.encrypt;
+    console.log(monster);
+    const props = await fheUserDeccrypt(window.fhevmInstance, EvolvAddress[customNetwork.id + ''].address,[
+      monster?.attack,
+      monster?.magic,
+      monster?.defense
+    ],signer);
+    appData.value.player.attack = props[0];
+    appData.value.player.magic = props[1];
+    appData.value.player.defense = props[2];
+    appData.value.player.decrypted = true;
+    hideLoading();
+  } catch(e) {
+    triggerError(e)
+    hideLoading();
+  }
 };
 
 const battle = async (opponent)=> {
@@ -316,11 +394,18 @@ const battle = async (opponent)=> {
     });
     return;
   }
-  console.log(opponent);
-  appData.value.battleInProgress = true;
-  // let scaore = await fightRoomContract.getFightScore(dst);
-  // console.log(scaore)
-  await fightRoomContract.attack(opponent.id);
+  try {
+    showLoading('Attacking')
+    console.log(opponent);
+    appData.value.battleInProgress = true;
+    // console.log(scaore)
+    let tx = await fightRoomContract.attack(opponent.id);
+    await tx.wait();
+    hideLoading();
+  } catch(e) {
+    triggerError(e)
+    hideLoading();
+  }
   // scaore = await fightRoomContract.getFightScore(signer.address);
   // console.log(scaore)
 }
@@ -331,15 +416,22 @@ const useMutationPotion = async()=> {
     return;
   }
   
-  if (appData.value.player.inventory.mutationPotion <= 0) {
+  if (appData.value.player.inventory.mutationPotion.length <= 0) {
     alert('Insufficient amount of mutation potion');
     return;
   }
-  
-  appData.value.player.inventory.mutationPotion--;
-  let tx = await minterContract.makeMutation(1);
-  await tx.wait();
-  console.log(tx.hash);
+  try {
+    showLoading('Mutation...')
+    let mi = appData.value.player.inventory.mutationPotion.shift();
+    console.log(mi)
+    let tx = await minterContract.makeMutation(mi);
+    await tx.wait();
+    console.log(tx.hash);
+    hideLoading();
+  } catch(e) {
+    triggerError(e)
+    hideLoading();
+  }
 }
 
 const useEnergyPotion = async()=> {
@@ -348,16 +440,23 @@ const useEnergyPotion = async()=> {
     return;
   }
   
-  if (appData.value.player.inventory.energyPotion <= 0) {
+  if (appData.value.player.inventory.energyPotion.length <= 0) {
     alert('Insufficient quantity of energy recovery potion');
     return;
   }
   
-  // 减少药水数量
-  appData.value.player.inventory.energyPotion--;
-  let tx = await minterContract.makeRecovery(1);
-  await tx.wait();
-  console.log(tx.hash);
+  try {
+    showLoading('Recoverying...')
+    let ei = appData.value.player.inventory.energyPotion.shift();
+    console.log(ei)
+    let tx = await minterContract.makeRecovery(ei);
+    await tx.wait();
+    console.log(tx.hash);
+    hideLoading();
+  } catch(e) {
+    triggerError(e)
+    hideLoading();
+  }
 }
 
 
@@ -365,38 +464,92 @@ const makeOffer = async()=> {
   if (!appData.value.selectedPlayer) {
     return;
   }
-  console.log(appData.value.selectedPlayer.id);
-  let tx = await marketContrat
-    .makeCrossOverRequest(appData.value.selectedPlayer.id,{
-            value: ethers.parseEther(appData.value.offerAmount + '')
-  });
-  appData.value.showOfferModal = false;
-  appData.value.showDNAAnimation = true;
-  // appData.value.fusionPartner = appData.value.selectedPlayer.name;
 
-  await tx.wait();
-  console.log(tx.hash);
-  appData.value.showDNAAnimation = false;  
-  appData.value.showNewEggModal = true;
+  try {
+    showLoading("Making Offer...")
+    console.log(appData.value.selectedPlayer.id);
+    let tx = await marketContrat
+            .makeCrossOverRequest(appData.value.selectedPlayer.id,{
+              value: ethers.parseEther(appData.value.offerAmount + '')
+    });
+    appData.value.showOfferModal = false;
+    appData.value.showDNAAnimation = true;
+    // appData.value.fusionPartner = appData.value.selectedPlayer.name;
+
+    await tx.wait();
+    console.log(tx.hash);
+    appData.value.showDNAAnimation = false;  
+    appData.value.showNewEggModal = true;
+    hideLoading();
+  } catch(e) {
+    triggerError(e)
+    hideLoading();
+  }
 }
 
-const acceptBid = (bid)=> {
-  bid.status = 'accepted';
-
+const acceptBid = async(bid)=> {
+  try {
+    bid.status = 'accepted';
+    console.log(bid);
+    showLoading('Accepting...')
+    let tx = await marketContrat
+            .acceptCrossOverRequest(bid.id);
+    await tx.wait();
+    console.log(tx.hash);
+    hideLoading();
+  } catch(e) {
+    triggerError(e)
+    hideLoading();
+  }
 }
 
-const cancelBid = (bid)=> {
+const cancelBid = async(bid)=> {
   bid.status = 'cancelled';
+  try {
+    showLoading("cancelBid....");
+    let tx = await marketContrat.cancleCrossOverRequest(bid.id)
+    await tx.wait();
+    console.log(tx.hash);
+    hideLoading()
+  } catch(e) {
+    triggerError(e)
+    hideLoading();
+  }
 }
 
 const claimRewards = async ()=> {
-  let tx = counterContract.requestBool();
+  showLoading("Claiming....");
+  try {
+    let tx = await minterContract.claimReward()
+    await tx.wait();
+    console.log(tx.hash)
+    hideLoading();
+  } catch(e) {
+    triggerError(e)
+    hideLoading();
+  }
+}
+const triggerError = (msg)=>{
+  appData.value.errorLayer.errorMsg = msg
+  appData.value.errorLayer.showError = true
+}
+const hideError = ()=>{
+  appData.value.errorLayer.errorMsg = ''
+  appData.value.errorLayer.showError = false
 }
 
 const checkIn = async()=> {
-  let tx = await minterContract.gm();
-  await tx.wait();
-  console.log(tx.hash);
+  showLoading('Checking...');
+  try {
+    let tx = await minterContract.gm();
+    await tx.wait();
+    console.log(tx.hash);
+    hideLoading();
+  } catch(e) {
+    hideLoading();
+    triggerError(e)
+    console.log(e)
+  }
 }
 
 </script>
@@ -424,7 +577,7 @@ const checkIn = async()=> {
     </header>
 
     <nav class="flex gap-3 mb-6 flex-wrap">
-      <button @click="appData.activeTab = 'mint'" :class="appData.activeTab === 'mint' ? 'btn-primary' : 'btn-ghost'">🥚 Monster Casting</button>
+      <button @click="appData.activeTab = 'mint'" :class="appData.activeTab === 'mint' ? 'btn-primary' : 'btn-ghost'">🥚 Monster Minting</button>
       <button @click="appData.activeTab = 'player'" :class="appData.activeTab === 'player' ? 'btn-primary' : 'btn-ghost'">👤 Player Information</button>
       <button @click="appData.activeTab = 'battle'" :class="appData.activeTab === 'battle' ? 'btn-primary' : 'btn-ghost'">⚔️ Battle</button>
       <button @click="appData.activeTab = 'exchange'" :class="appData.activeTab === 'exchange' ? 'btn-primary' : 'btn-ghost'">💱 Gene Exchange</button>
@@ -434,8 +587,8 @@ const checkIn = async()=> {
       <!-- Egg Minting Page -->
       <div v-if="appData.activeTab === 'mint'" class="space-y-6">
         <div class="card p-5">
-          <h2 class="text-lg">Monster Casting (Each wallet can only cast 1 egg)</h2>
-          <div class="muted text-sm mt-1">Casting after connecting the wallet. After casting is completed, the button will be disabled and your monster will be displayed.</div>
+          <h2 class="text-lg">Monster Minting (Each wallet can only cast 1 Monster)</h2>
+          <div class="muted text-sm mt-1">Minting after connecting the wallet. After minting is completed, the button will be disabled and your monster will be displayed.</div>
 
           <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -507,7 +660,7 @@ const checkIn = async()=> {
               <div class="muted mt-2 text-xs">Name</div>
               <div class="text-lg font-bold mt-1">{{ appData.player.name || '—' }}</div>
               <div class="muted mt-2 text-xs">Address</div>
-              <div class="font-mono mt-1">{{ appData.player.address || '未连接' }}</div>
+              <div class="font-mono mt-1">{{ appData.player.address || 'unconnect' }}</div>
               <div class="muted mt-2 text-xs">Record</div>
               <div class="text-lg font-bold mt-1">WIN：{{ appData.player.wins }} • LOSE：{{ appData.player.losses }}</div>
             </div>
@@ -551,13 +704,12 @@ const checkIn = async()=> {
           <div class="mt-4">
             <h3 class="muted text-sm">Supplies</h3>
             <div class="mt-3 grid grid-cols-2 gap-3">
-              <!-- 变异药水 -->
-              <div v-if="appData.player.inventory.mutationPotion > 0" class="card p-3 rounded flex items-center gap-3">
+              <div v-if="appData.player.inventory.mutationPotion.length > 0" class="card p-3 rounded flex items-center gap-3">
                 <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#8eb8ff] to-[#00f6ff] flex items-center justify-center font-bold">🧪</div>
                 <div class="flex-1">
                   <div class="font-semibold flex items-center">
                     Mutation Potion
-                    <span class="item-count">{{ appData.player.inventory.mutationPotion }}</span>
+                    <span class="item-count">{{ appData.player.inventory.mutationPotion.length }}</span>
                   </div>
                   <div class="muted text-xs">After use, there is a probability of slightly improving one attribute</div>
                 </div>
@@ -567,12 +719,12 @@ const checkIn = async()=> {
               </div>
 
               
-              <div v-if="appData.player.inventory.energyPotion > 0" class="card p-3 rounded flex items-center gap-3">
+              <div v-if="appData.player.inventory.energyPotion.length > 0" class="card p-3 rounded flex items-center gap-3">
                 <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#3ab6ff] to-[#8eb3ff] flex items-center justify-center font-bold">⚡</div>
                 <div class="flex-1">
                   <div class="font-semibold flex items-center">
                     Energy Recovery Potion
-                    <span class="item-count">{{ appData.player.inventory.energyPotion }}</span>
+                    <span class="item-count">{{ appData.player.inventory.energyPotion.length }}</span>
                   </div>
                   <div class="muted text-xs">Restore energy to your monster after use</div>
                 </div>
@@ -582,7 +734,7 @@ const checkIn = async()=> {
               </div>
 
               
-              <div v-if="Object.values(appData.player.inventory).every(count => count === 0)" class="col-span-2 p-4 text-center muted">
+              <div v-if="Object.values(appData.player.inventory).every(count => count.length === 0)" class="col-span-2 p-4 text-center muted">
                 No available materials at the moment
               </div>
             </div>
@@ -757,7 +909,7 @@ const checkIn = async()=> {
                 </div>
                 
                 <div class="flex items-center space-x-4">
-                  <button @click="openOfferModal(otherPlayer)" class="btn-ghost">出价</button>
+                  <button @click="openOfferModal(otherPlayer)" class="btn-ghost">bid</button>
                 </div>
               </div>
             </div>
@@ -915,6 +1067,11 @@ const checkIn = async()=> {
         <button @click="appData.showNewEggModal = false" class="btn-primary w-full">Take the new monster</button>
       </div>
     </div>
+    <LoadingLayer :visible="appData.loading.loading" :message="appData.loading.status"/>
+    <ErrorLayer 
+        :visible="appData.errorLayer.showError"
+        :message="appData.errorLayer.errorMsg"
+        @close="appData.errorLayer.showError = false"/>
 </template>
 
 <style>

@@ -10,7 +10,7 @@ import {mockContract} from "./fhevm/mock/networks"
 import {speContract} from "./fhevm/mock/networks"
 
 const localhost = 'http://localhost:8545'
-const spehost = 'https://eth-sepolia.public.blastapi.io'
+const spehost = 'https://eth-sepolia.g.alchemy.com/v2/_iXGcHToZonxLc1dSFv_-2ySIeC0_heG'
 
 const curNet = {
     chainId: 11155111,

@@ -3,7 +3,7 @@ export const FightingRoomAddress = {
         address:'0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9'
     },
     '11155111':{
-      address:'0x70EB877816C95806bC4e2FC0CaF7959E9B56845D'
+      address:'0xEE4EAda1b8e91bBcCac8bC4732e49FE79C3b874A'
     }
 }
 export const FightingRoomABI = {
@@ -111,6 +111,24 @@ export const FightingRoomABI = {
       "inputs": [
         {
           "internalType": "address",
+          "name": "_to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_point",
+          "type": "uint256"
+        }
+      ],
+      "name": "extendPoint",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
           "name": "_target",
           "type": "address"
         }
@@ -138,6 +156,66 @@ export const FightingRoomABI = {
           "internalType": "struct FightInfo",
           "name": "",
           "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_to",
+          "type": "address"
+        }
+      ],
+      "name": "getPointCount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_player",
+          "type": "address"
+        }
+      ],
+      "name": "loadAttacks",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "sender",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "win",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "decrypt",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct AttackRequest[]",
+          "name": "",
+          "type": "tuple[]"
         }
       ],
       "stateMutability": "view",

@@ -3,7 +3,7 @@ export const InventoryAddress = {
         address:'0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9'
     } ,
     '11155111':{
-      address:'0x5b53250dBBDF86AB95d5b5761F8c71243639255c'
+      address:'0x7A6045098472df6676AC2642c785bEdd44e62978'
     }
 }
 export const InventoryABI = {
@@ -345,19 +345,26 @@ export const InventoryABI = {
           "internalType": "address",
           "name": "_sender",
           "type": "address"
-        },
-        {
-          "internalType": "uint16",
-          "name": "_type",
-          "type": "uint16"
         }
       ],
       "name": "balanceOfType",
       "outputs": [
         {
-          "internalType": "uint16",
+          "components": [
+            {
+              "internalType": "uint16",
+              "name": "itemType",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct ItemInfo[]",
           "name": "",
-          "type": "uint16"
+          "type": "tuple[]"
         }
       ],
       "stateMutability": "view",
@@ -411,6 +418,11 @@ export const InventoryABI = {
               "internalType": "uint16",
               "name": "itemType",
               "type": "uint16"
+            },
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
             }
           ],
           "internalType": "struct ItemInfo",
