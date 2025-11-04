@@ -29,4 +29,4 @@ npm run build
 ```
 
 ### Demo Url
-https://fhevm-83vpyihr0-monstercrys-projects.vercel.app/
+https://fhevm-vue.vercel.app/
