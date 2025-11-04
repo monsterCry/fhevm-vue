@@ -117,7 +117,7 @@ const createFHEInstance = async (parameters: {
   await initSDK();
 
   const config = SepoliaConfig;
-  config.network = 'https://eth-sepolia.public.blastapi.io';
+  config.network = 'https://eth-sepolia.g.alchemy.com/v2/_iXGcHToZonxLc1dSFv_-2ySIeC0_heG';
   const instance = await createInstance(config);
   return instance;
 };
