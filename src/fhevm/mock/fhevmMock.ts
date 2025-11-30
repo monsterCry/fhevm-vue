@@ -9,13 +9,13 @@
 import { JsonRpcProvider } from "ethers";
 import { MockFhevmInstance } from "@fhevm/mock-utils";
 
+
 import {
   initSDK,
   createInstance,
   SepoliaConfig,
   FhevmInstance
 } from '@zama-fhe/relayer-sdk/bundle';
-
 const fhevmMockCreateInstance = async (parameters: {
   rpcUrl: string;
   chainId: number;
@@ -27,12 +27,9 @@ const fhevmMockCreateInstance = async (parameters: {
 }): Promise<FhevmInstance> => {
   const provider = new JsonRpcProvider(parameters.rpcUrl);
   const instance = await MockFhevmInstance.create(provider, provider, {
-    //aclContractAddress: "0x50157CFfD6bBFA2DECe204a89ec419c23ef5755D",
     aclContractAddress: parameters.metadata.ACLAddress,
     chainId: parameters.chainId,
     gatewayChainId: 55815,
-    // inputVerifierContractAddress: "0x901F8942346f7AB3a01F6D7613119Bca447Bb030",
-    // kmsContractAddress: "0x1364cBBf2cDF5032C47d8226a6f6FBD2AFCDacAC",
     inputVerifierContractAddress: parameters.metadata.InputVerifierAddress,
     kmsContractAddress: parameters.metadata.KMSVerifierAddress,
     verifyingContractAddressDecryption:
@@ -44,12 +41,14 @@ const fhevmMockCreateInstance = async (parameters: {
 };
 
 const fheUserDeccrypt = async (instance,contractAddress,ciphertextHandle,signer) => {
+  
   const keypair = instance.generateKeypair();
 
   const startTimeStamp = Math.floor(Date.now() / 1000).toString();
   const durationDays = '10';
   const contractAddresses = [contractAddress];
 
+  console.log(contractAddresses)
   const eip712 = instance.createEIP712(
     keypair.publicKey,
     contractAddresses,
@@ -99,24 +98,15 @@ const createFHEInstance = async (parameters: {
     KMSVerifierAddress: `0x${string}`;
   };
 }): Promise<FhevmInstance> => {
-  // const instance = await createInstance({
-  //   aclContractAddress: parameters.metadata.ACLAddress,
-  //   chainId: parameters.chainId,
-  //   gatewayChainId: 55815,
-  //   inputVerifierContractAddress: parameters.metadata.InputVerifierAddress,
-  //   kmsContractAddress: parameters.metadata.KMSVerifierAddress,
-  //   verifyingContractAddressDecryption:
-  //     "0xb6E160B1ff80D67Bfe90A85eE06Ce0A2613607D1",
-  //   verifyingContractAddressInputVerification:
-  //     "0x7048C39f048125eDa9d678AEbaDfB22F7900a29F",
-  //     // Optional RPC provider to host chain
-  //   network: 'https://eth-sepolia.public.blastapi.io',
-  //   // Relayer URL
-  //   relayerUrl: 'https://relayer.testnet.zama.cloud',
-  // });
-  await initSDK();
-
+  
   const config = SepoliaConfig;
+  try {
+    await initSDK();
+  } catch(e) {
+    console.error(e)
+  }
+  
+
   config.network = 'https://eth-sepolia.g.alchemy.com/v2/_iXGcHToZonxLc1dSFv_-2ySIeC0_heG';
   const instance = await createInstance(config);
   return instance;

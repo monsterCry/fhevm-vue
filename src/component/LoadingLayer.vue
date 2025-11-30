@@ -4,7 +4,6 @@
       v-if="visible"
       class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#050910]/90 backdrop-blur-sm"
     >
-      <!-- DNA 蓝色旋转动画 -->
       <div class="relative w-20 h-20 mb-6">
         <div class="absolute inset-0 animate-spin-slow">
           <svg viewBox="0 0 100 100" class="w-full h-full">

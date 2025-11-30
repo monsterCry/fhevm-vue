@@ -4,32 +4,31 @@ import { ethers } from 'ethers';
 import LoadingLayer from './component/LoadingLayer.vue'
 import ErrorLayer from './component/ErrorLayer.vue';
 import { createAppKit,useAppKit,useDisconnect } from '@reown/appkit/vue'
-import { energy, type  AppKitNetwork } from '@reown/appkit/networks'
+import {  type  AppKitNetwork } from '@reown/appkit/networks'
 import { EthersAdapter } from "@reown/appkit-adapter-ethers";
 import { sepolia } from "@reown/appkit/networks";
 
 import { defineChain } from '@reown/appkit/networks';
 import { customNet } from './fhevm/mock/networks'
-import { fheUserDeccrypt, createFHEInstance} from './fhevm/mock/fhevmMock'
+import { fheUserDeccrypt} from './fhevm/mock/fhevmMock'
 
-import { useAppKitProvider, useAppKitAccount } from "@reown/appkit/vue";
-import { BrowserProvider, Contract, formatUnits } from "ethers";
+import { useAppKitProvider } from "@reown/appkit/vue";
+import { BrowserProvider, Contract } from "ethers";
 
 import {EvolvAddress,EvolvABI} from './abi/EvolvMonster';
 import {FightingRoomABI,FightingRoomAddress} from './abi/FightingRoom';
 import {CountABI,CountAddress} from './abi/Counter';
-
 import {GeneMarketplaceABI,GeneMarketplaceAddress} from './abi/GeneMarketplace';
 import {InventoryABI,InventoryAddress} from './abi/Inventory';
-
 import {MinterABI,MinterAddress} from './abi/Minter';
 
-const customNetwork = sepolia//defineChain(customNet);
+const customNetwork = defineChain(customNet);
+
 const projectId = 'a84a612db0164bf224ae42d5da621bb3'
 const metadata = {
   name: 'AppKit',
   description: 'The Evolving Monster',
-  url: 'https://fhevm-vue.vercel.app/', // origin must match your domain & subdomain
+  url: 'https://fhevm-vue.vercel.app', // origin must match your domain & subdomain
   icons: ['https://avatars.githubusercontent.com/u/179229932']
 }
 const networks: [AppKitNetwork, ...AppKitNetwork[]] = [customNetwork]
@@ -62,16 +61,15 @@ onMounted(async ()=>{
   }
 });
 
-const loadProper = async(monster,inventory,addr)=>{
+const loadProper = async(monster,addr)=>{
   console.log('loadProper',monster);
   if(!monster[3]) {
-    appData.value.player = {
-        inventory: inventory,
+    Object.assign(appData.value.player, {
         address:short(addr)
-    }
+    })
     return;
   } 
-  appData.value.player = {
+ Object.assign(appData.value.player,{
     name: monster[2],
     hasEgg: monster[3],
     energy: monster[1],
@@ -81,44 +79,20 @@ const loadProper = async(monster,inventory,addr)=>{
       magic: monster[0][1],
       defense: monster[0][2]
     },
-    inventory: inventory,
     address:short(addr)
-  }  
+  })  
 }
 
-appkit.subscribeState(async (sta)=>{
-
-  try {
-    if(!sta.initialized) {
-        return;
-      }
-      const { walletProvider } = useAppKitProvider("eip155");
-      if(walletProvider == undefined) {
-        return;
-      }
-
-      const ethersProvider = new BrowserProvider(walletProvider);
-      signer = await ethersProvider.getSigner(); 
-      let wallet = signer.address;
+const loadGameData = async(wallet)=>{
+      resetData();
+      showLoading('Loading Game Data...');
       appData.value.player.address = short(wallet);
       
       if (appData.value.player.nameInput) {
         appData.value.player.name = appData.value.player.nameInput;
       }
-      console.log(customNetwork.id)
-      minterContract = new Contract(MinterAddress[customNetwork.id + ''].address, MinterABI.abi, signer);
-      monsterContract = new Contract(EvolvAddress[customNetwork.id + ''].address, EvolvABI.abi, signer);
-      fightRoomContract = new Contract(FightingRoomAddress[customNetwork.id + ''].address, FightingRoomABI.abi, signer);
-      counterContract = new Contract(CountAddress[customNetwork.id + ''].address, CountABI.abi, signer);
-      marketContrat = new Contract(GeneMarketplaceAddress[customNetwork.id + ''].address, GeneMarketplaceABI.abi, signer);
-      inventoryContrat = new Contract(InventoryAddress[customNetwork.id + ''].address, InventoryABI.abi, signer);
-
-      showLoading('Loading Game Data...');
-
       let poffer = await marketContrat.palyerOffers(0);
       let offer = await marketContrat.palyerOwnerOffers(0);
-      console.log('poffer',poffer)
-      console.log('offer', offer)
 
       for(let i = 0; i < poffer.length; i++) {
         appData.value.inboxBids.push({ 
@@ -141,10 +115,7 @@ appkit.subscribeState(async (sta)=>{
           partnerAvatar: '' 
         })
       }
-
-      //playerlist
       let playerList = await monsterContract.listMonsters(0,5);
-      console.log('==playerList==>' , playerList);
       for(let i = 0; i < playerList.length; i++) {
         if(playerList[i][4] == wallet) {
           continue;
@@ -163,7 +134,6 @@ appkit.subscribeState(async (sta)=>{
       }
 
       let recentPlayerList = await monsterContract.listRecentMinted(2);
-      console.log('recentPlayerList',recentPlayerList);
       for(let i = 0; i < recentPlayerList.length; i++) {
         if(!recentPlayerList[i][3]) {
           continue;
@@ -180,32 +150,22 @@ appkit.subscribeState(async (sta)=>{
           tokenUri: JSON.parse(await monsterContract.tokenURI(recentPlayerList[i][5]))
         })
       }
-      
-      await inventoryContrat.on('InventoryMinted',async(e)=>{
-        console.log('inventoryContrat' , e);
-      })
 
-      
+
       let monster = await monsterContract.getProperty(wallet);
       let inventory = {
         mutationPotion: [],
         energyPotion: []
       }
       if(monster[3]) {
-        let scaore = await fightRoomContract.getFightScore(wallet);
         const fights = await fightRoomContract.loadAttacks(wallet);
-        console.log('fight',fights)
         for(let i = 0; i < fights.length; i++) {
           appData.value.battleLog.push({
                 message: `${short(fights[i][0])} vs ${short(fights[i][1])}`,
-                details: fights[i][3]?(fights[i][2]?'win':'lose'):'pendding',
-                //type: fights[i][3]?(fights[i][2]?'win':'lose'):'pendding'
+                details: fights[i][3]?(fights[i][2]?'win':'lose'):'pendding'
               })
         }
-
-        console.log(await inventoryContrat.balanceOf(wallet))
         let mantaCount = await inventoryContrat.balanceOfType(wallet);
-        console.log(mantaCount)
         for(let i = 0; i < mantaCount.length; i++) {
           if(mantaCount[i][0] == 1) {
             inventory.mutationPotion.push(mantaCount[i][1]);
@@ -213,20 +173,48 @@ appkit.subscribeState(async (sta)=>{
             inventory.energyPotion.push(mantaCount[i][1]);
           }
         }
-        console.log(inventory)
         appData.value.player.inventory = inventory;
       }
 
-      await loadProper(monster,inventory,wallet);
+      await loadProper(monster,wallet);
+      let scaore = await fightRoomContract.getFightScore(wallet);
+      hideLoading();
+}
+
+appkit.subscribeState(async (sta)=>{
+
+  try {
+    if(!sta.initialized) {
+        return;
+      }
+      const { walletProvider } = useAppKitProvider("eip155");
+      if(walletProvider == undefined) {
+        return;
+      }
+      
+      const ethersProvider = new BrowserProvider(walletProvider);
+      signer = await ethersProvider.getSigner(); 
+      let wallet = signer.address;
+   
+      console.log(customNetwork.id)
+      minterContract = new Contract(MinterAddress[customNetwork.id + ''].address, MinterABI.abi, signer);
+      monsterContract = new Contract(EvolvAddress[customNetwork.id + ''].address, EvolvABI.abi, signer);
+      fightRoomContract = new Contract(FightingRoomAddress[customNetwork.id + ''].address, FightingRoomABI.abi, signer);
+      counterContract = new Contract(CountAddress[customNetwork.id + ''].address, CountABI.abi, signer);
+      marketContrat = new Contract(GeneMarketplaceAddress[customNetwork.id + ''].address, GeneMarketplaceABI.abi, signer);
+      inventoryContrat = new Contract(InventoryAddress[customNetwork.id + ''].address, InventoryABI.abi, signer);
       await monsterContract.on('MonsterMinted', async(e)=>{
         console.log('monsterContract' , e);
-        monster = await monsterContract.getProperty(wallet);
-        await loadProper(monster,inventory,wallet);
+        await loadGameData(wallet)
       });
 
-      let scaore = await fightRoomContract.getFightScore(wallet);
-      console.log(scaore)
-      hideLoading();
+            
+      await inventoryContrat.on('InventoryMinted',async(e)=>{
+        console.log('inventoryContrat' , e);
+        await loadGameData(wallet)
+      })
+
+      await loadGameData(wallet);
   } catch(e) {
     triggerError(e)
     hideLoading();
@@ -305,8 +293,7 @@ const connectWallet = async() => {
  open();
 }
 
-const disconnectWallet = async() => {
-  await disconnect();
+const resetData = ()=>{
   appData.value.player = {
     address: null,
     name: '',
@@ -324,6 +311,11 @@ const disconnectWallet = async() => {
       energyPotion: []
     }
   };
+}
+
+const disconnectWallet = async() => {
+  await disconnect();
+  resetData();
 }
 
 const openOfferModal = (player)=> {
@@ -380,6 +372,7 @@ const toggleDecrypt = async()=>{
     appData.value.player.decrypted = true;
     hideLoading();
   } catch(e) {
+    console.log(e)
     triggerError(e)
     hideLoading();
   }
@@ -533,6 +526,7 @@ const triggerError = (msg)=>{
   appData.value.errorLayer.errorMsg = msg
   appData.value.errorLayer.showError = true
 }
+
 const hideError = ()=>{
   appData.value.errorLayer.errorMsg = ''
   appData.value.errorLayer.showError = false

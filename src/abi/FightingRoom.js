@@ -103,7 +103,13 @@ export const FightingRoomABI = {
         }
       ],
       "name": "attackResult",
-      "outputs": [],
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
       "stateMutability": "nonpayable",
       "type": "function"
     },
