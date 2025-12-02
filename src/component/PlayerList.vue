@@ -121,7 +121,7 @@
           <div class="flex items-center gap-4 mb-6">
             <div
               class="w-20 h-20 rounded-2xl bg-black/40 border border-white/10 overflow-hidden"
-              :style="monsterStyle(activeSwapPlayer.id)"
+              :style="monsterStyle(activeSwapPlayer)"
             ></div>
             <div>
               <div class="text-lg font-semibold">
@@ -173,7 +173,7 @@
 <script setup>
 import { ref, computed, watchEffect } from "vue";
 const {fhevmObject} = defineProps(['fhevmObject'])
-
+import { ethers } from 'ethers';
 
 const players = ref([]);
 
@@ -237,6 +237,7 @@ const monsterWidth = 300;
 
 
 const monsterStyle = (monster) => {
+  console.log(monster)
   return `
     background-image: url('${monster.tokenUri.image}');
     background-size: 1536px auto;
@@ -248,15 +249,20 @@ const monsterStyle = (monster) => {
 const loadingBattle = ref(false);
 const activeBattlePlayer = ref(null);
 
-const startBattle = (player) => {
-  activeBattlePlayer.value = player;
-  loadingBattle.value = true;
-
-  setTimeout(() => {
+const startBattle = async (player) => {
+  console.log('startBattle', player)
+  try {
+    activeBattlePlayer.value = player;
+    loadingBattle.value = true;
+    const fightRoomContract = window.fhevmObject.fightRoomContract;
+    let tx = await fightRoomContract.attack(player.id);
+    await tx.wait();
     loadingBattle.value = false;
-    alert("Battle ready vs " + player.name);
+  } catch(e) {
+    console.error(e)
+    loadingBattle.value = false;
+  }
 
-  }, 1500);
 };
 
 
@@ -276,23 +282,30 @@ const closeSwap = () => {
   swapping.value = false;
 };
 
-const confirmSwap = () => {
+const confirmSwap = async () => {
   if (!swapPrice.value || Number(swapPrice.value) <= 0) {
     alert("Please enter a valid price.");
     return;
   }
 
-  swapping.value = true;
-
-
-  setTimeout(() => {
+  try {
+    swapping.value = true;
+    const marketContrat = window.fhevmObject.marketContrat;
+    let tx = await marketContrat
+            .makeCrossOverRequest(activeSwapPlayer.value.id,{
+              value: ethers.parseEther(swapPrice.value + '')
+    });
+    await tx.wait();
+    console.log(tx.hash);
     swapping.value = false;
     showSwapModal.value = false;
-    alert(
-      `Gene Swap offer of ${swapPrice.value} ETH sent to ${activeSwapPlayer.value.name}`
-    );
+  } catch(e) {
+    console.error(e)
+    swapping.value = false;
+    showSwapModal.value = false;
+  }
 
-  }, 1500);
+
 };
 
 const loadMonsters = async() => {
@@ -304,16 +317,14 @@ const loadMonsters = async() => {
    
     players.value = [];
     for(let i = 0; i < playerList.length; i++) {
-      console.log(playerList[i]);
       let tokenUri = JSON.parse(await monsterContract.tokenURI(playerList[i][5]));
       players.value.push({
-        id: playerList[i][1],
+        id: playerList[i][5],
         name: `${playerList[i][2]}`,
         wins: 0,
         losses: 0,
         tokenUri: tokenUri
       })
-      console.log(tokenUri);
     }
 }
 

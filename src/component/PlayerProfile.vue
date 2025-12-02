@@ -339,9 +339,9 @@
     </transition>
   </div>
 
-      <canvas
+      <!-- <canvas
         id="player-avstart" width="600" height="850" style="background-color: aqua;"
-    ></canvas>
+    ></canvas> -->
 </template>
 
 <script setup>
@@ -510,18 +510,18 @@ const claimReward = async() => {
 }
 
 const useMutationPotion = async(id)=> {
-  commonComp.commonOpt('Claim Reward','Claimimg...',async()=>{
+  commonComp.commonOpt('Use Manta','Mutationing...',async()=>{
     let minterContract = window.fhevmObject.minterContract;
-    let tx = await minterContract.makeMutation(mi);
+    let tx = await minterContract.makeMutation(id);
     await tx.wait();
     console.log(tx.hash);
   });
 }
 
 const useEnergyPotion = async(id)=> {
-  commonComp.commonOpt('Claim Reward','Claimimg...',async()=>{
+  commonComp.commonOpt('Use Manta','Recovering...',async()=>{
     let minterContract = window.fhevmObject.minterContract;
-    let tx = await minterContract.makeRecovery(ei);
+    let tx = await minterContract.makeRecovery(id);
     await tx.wait();
     console.log(tx.hash);
   });
@@ -529,10 +529,10 @@ const useEnergyPotion = async(id)=> {
 
 const useInventory = async(itm) => {
   console.log(itm)
-  if(itm.name == '0') {
-    await useMutationPotion(0);
-  } else if(itm.name == '1') {
-    await useEnergyPotion(0);
+  if(itm.type == 1) {
+    await useMutationPotion(itm.id);
+  } else if(itm.type == 2) {
+    await useEnergyPotion(itm.id);
   }
 }
 
@@ -589,14 +589,18 @@ watchEffect(async() => {
     for(let i = 0; i < mantaCount.length; i++) {
       if(mantaCount[i][0] == 1) {
         inventory.value.push({
+          type:1,
+          count:mantaCount[i][1],
           name: "Mutation Potion",
-          icon: mantaCount[i][0] + "🧪",
+          icon:  "🧪",
           desc: "Randomly changing the monster's genes",
         });
       } else if(mantaCount[i][0] == 2) {
         inventory.value.push({
+          type:2,
+          count:mantaCount[i][1],
           name: "Energy Recovery Potion",
-          icon: mantaCount[i][1] + "🔋",
+          icon: "🔋",
           desc: "Immediately restore 50 points of energy.",
         });
       }
@@ -624,7 +628,7 @@ watchEffect(async() => {
       })
     }
   }
-  commonComp.drawPlayer(player,'player-avstart')
+  //commonComp.drawPlayer(player,'player-avstart')
 })
 
 </script>
