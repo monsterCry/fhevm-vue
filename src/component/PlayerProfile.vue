@@ -347,6 +347,7 @@
 <script setup>
 import { computed, ref,watchEffect } from "vue";
 import { fheUserDeccrypt} from '../fhevm/mock/fhevmMock'
+import { ethers } from 'ethers';
 
 const {wallet,commonComp} = defineProps(['wallet','commonComp'])
 
@@ -541,23 +542,38 @@ const openEquipModal = (item) => {
 };
 
 // 接受 offer
-const acceptOffer = (type, idx) => {
+const acceptOffer = async(type, idx) => {
   if (type === "received") {
     receivedOffers.value[idx].status = "Accepted";
+
+    const marketContrat = window.fhevmObject.marketContrat;
+    let tx = await marketContrat
+        .acceptCrossOverRequest(bid.id);
+    await tx.wait();
+    console.log(tx.hash);
   }
 };
 
 // 拒绝 offer
-const rejectOffer = (type, idx) => {
+const rejectOffer = async (type, idx) => {
   if (type === "received") {
     receivedOffers.value[idx].status = "Rejected";
   }
 };
 
 // 取消发出的 offer
-const cancelOffer = (idx) => {
+const cancelOffer = async(idx) => {
   sentOffers.value[idx].status = "Cancelled";
+  const marketContrat = window.fhevmObject.marketContrat;
+  let tx = await marketContrat.cancleCrossOverRequest(bid.id)
+  await tx.wait();
+  console.log(tx.hash);
 };
+ const short = (addr)=>{
+  if (!addr) return '';
+  if (addr.length < 12) return addr;
+  return addr.slice(0,8)+'...'+addr.slice(-4);
+}
 watchEffect(async() => {
   if(!wallet) {
     return;
@@ -607,23 +623,27 @@ watchEffect(async() => {
     }
 
     for(let i = 0; i < poffer.length; i++) {
-      receivedOffers.push({ 
+      receivedOffers.value.push({ 
         id: poffer[i][5], 
-        bidder: poffer[i][0], 
-        amount: ethers.formatEther(poffer[i][3] + ''), 
+        to: poffer[i][0], 
+        amount: ethers.formatEther(poffer[i][3] + '') + ' ETH', 
         ts: Date.now() - 3600000, 
-        status: poffer[i][4] == 0?'open':'close', 
+        status: poffer[i][4] == 0?'Open':'Close', 
         partnerAvatar: '' 
       })
     }
 
     for(let i = 0; i < offer.length; i++) {
+        //   to: "0x88...c001",
+  //   target: "Gene Egg #77",
+  //   price: "0.15 ETH",
+  //   status: "Pending",
       sentOffers.value.push({ 
         id: offer[i][5], 
-        bidder: offer[i][2], 
-        amount: ethers.formatEther(offer[i][3] + ''), 
+        to: offer[i][2], 
+        price: ethers.formatEther(offer[i][3] + '') + ' ETH', 
         ts: Date.now() - 3600000, 
-        status: offer[i][4] == 0?'open':'close', 
+        status: offer[i][4] == 0?'Open':'Close', 
         partnerAvatar: '' 
       })
     }

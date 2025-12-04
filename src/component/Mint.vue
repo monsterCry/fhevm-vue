@@ -140,7 +140,7 @@ const mint = async () => {
     });
     await tx.wait();
     showSuccessModal.value = true;
-    isMinted = true;
+    isMinted.value = true;
   } catch (e) {
     console.error(e)
     errorMessage.value = "Mint failed." ;
