@@ -9,7 +9,7 @@
         class="w-16 h-16 rounded-full border-4 border-white border-t-transparent animate-spin mb-6"
       ></div>
 
-      <h2 class="text-2xl font-bold mb-2">
+      <h2 class="text-2xl font-bold mb-2" style="color: white;">
         {{ title || "Processing..." }}
       </h2>
 

@@ -180,7 +180,9 @@ const drawPlayer = async(player, elem) => {
 
 const commonComp = ref({
   commonOpt,
-  drawPlayer
+  drawPlayer,
+  showError,
+  hideError
 })
 
 const connectWallet = async () => {

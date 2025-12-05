@@ -222,24 +222,24 @@
             <div class="flex gap-2 mt-2">
     
                 <button
-                v-if="offer.status === 'Pending'"
+                v-if="offer.status === 'Open'"
                 @click="acceptOffer('received', idx)"
                 class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 transition text-[11px] text-white"
                 >
                 Accept
                 </button>
 
-                <button
-                v-if="offer.status === 'Pending'"
+                <!-- <button
+                v-if="offer.status === 'Open'"
                 @click="rejectOffer('received', idx)"
                 class="px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 transition text-[11px] text-white"
                 >
                 Reject
-                </button>
+                </button> -->
 
                 <!-- Status after action -->
                 <span
-                v-if="offer.status !== 'Pending'"
+                v-if="offer.status !== 'Open'"
                 class="text-[11px] px-2 py-[2px] rounded-full"
                 :class="offer.status === 'Accepted'
                     ? 'bg-emerald-500/20 text-emerald-300'
@@ -272,7 +272,7 @@
             <div class="flex gap-2 mt-2">
                 <!-- Cancel only when pending -->
                 <button
-                v-if="offer.status === 'Pending'"
+                v-if="offer.status === 'Open'"
                 @click="cancelOffer(idx)"
                 class="px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 transition text-[11px] text-white"
                 >
@@ -474,7 +474,7 @@ const toggleDecrypt = async() => {
     if(decrypted.value) {
         return;
     }
-    commonComp.commonOpt('Decrypt','Decrypt...',async()=>{
+    commonComp.commonOpt('Decrypt','Decrypt Player Property',async()=>{
       let signer = window.fhevmObject.fhevmSigner;
       let monsterContract = window.fhevmObject.monsterContract;
       console.log(signer.address)
@@ -543,15 +543,16 @@ const openEquipModal = (item) => {
 
 // 接受 offer
 const acceptOffer = async(type, idx) => {
-  if (type === "received") {
-    receivedOffers.value[idx].status = "Accepted";
-
-    const marketContrat = window.fhevmObject.marketContrat;
-    let tx = await marketContrat
-        .acceptCrossOverRequest(bid.id);
-    await tx.wait();
-    console.log(tx.hash);
-  }
+  commonComp.commonOpt('acceptOffer','acceptOffer...',async()=>{
+    if (type === "received") {
+      receivedOffers.value[idx].status = "Accepted";
+      const marketContrat = window.fhevmObject.marketContrat;
+      let tx = await marketContrat
+          .acceptCrossOverRequest(receivedOffers.value[idx].id);
+      await tx.wait();
+      console.log(tx.hash);
+    }
+  });
 };
 
 // 拒绝 offer
@@ -563,11 +564,14 @@ const rejectOffer = async (type, idx) => {
 
 // 取消发出的 offer
 const cancelOffer = async(idx) => {
-  sentOffers.value[idx].status = "Cancelled";
-  const marketContrat = window.fhevmObject.marketContrat;
-  let tx = await marketContrat.cancleCrossOverRequest(bid.id)
-  await tx.wait();
-  console.log(tx.hash);
+
+  commonComp.commonOpt('cancelOffer','cancelOffer...',async()=>{
+    sentOffers.value[idx].status = "Cancelled";
+    const marketContrat = window.fhevmObject.marketContrat;
+    let tx = await marketContrat.cancleCrossOverRequest(sentOffers.value[idx].id)
+    await tx.wait();
+    console.log(tx.hash);
+  });
 };
  const short = (addr)=>{
   if (!addr) return '';
@@ -598,7 +602,9 @@ watchEffect(async() => {
     for(let i = 0; i < fights.length; i++) {
       battleHistory.value.push({
             opponent: `${short(fights[i][0])} vs ${short(fights[i][1])}`,
-            details: fights[i][3]?(fights[i][2]?'win':'lose'):'pendding'
+            result: (fights[i][3]?(fights[i][2]?'Win':'Lose'):'Pendding'),
+            time: "2025-11-16 20:45",
+            reward: '+5 Point & +1 Exp'
           })
     }
     let mantaCount = await inventoryContrat.balanceOfType(wallet);
@@ -626,7 +632,7 @@ watchEffect(async() => {
       receivedOffers.value.push({ 
         id: poffer[i][5], 
         to: poffer[i][0], 
-        amount: ethers.formatEther(poffer[i][3] + '') + ' ETH', 
+        price: ethers.formatEther(poffer[i][3] + '') + ' ETH', 
         ts: Date.now() - 3600000, 
         status: poffer[i][4] == 0?'Open':'Close', 
         partnerAvatar: '' 
@@ -634,10 +640,6 @@ watchEffect(async() => {
     }
 
     for(let i = 0; i < offer.length; i++) {
-        //   to: "0x88...c001",
-  //   target: "Gene Egg #77",
-  //   price: "0.15 ETH",
-  //   status: "Pending",
       sentOffers.value.push({ 
         id: offer[i][5], 
         to: offer[i][2], 

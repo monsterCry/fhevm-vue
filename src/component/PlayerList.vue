@@ -172,8 +172,8 @@
 
 <script setup>
 import { ref, computed, watchEffect } from "vue";
-const {fhevmObject} = defineProps(['fhevmObject'])
 import { ethers } from 'ethers';
+const {wallet,commonComp} = defineProps(['wallet','commonComp'])
 
 const players = ref([]);
 
@@ -250,30 +250,24 @@ const loadingBattle = ref(false);
 const activeBattlePlayer = ref(null);
 
 const startBattle = async (player) => {
-  console.log('startBattle', player)
-  try {
+  commonComp.commonOpt('Preparing Battle…','FHE secure combat calculation running…',async()=>{
     activeBattlePlayer.value = player;
-    loadingBattle.value = true;
     const fightRoomContract = window.fhevmObject.fightRoomContract;
     let tx = await fightRoomContract.attack(player.id);
     await tx.wait();
-    loadingBattle.value = false;
-  } catch(e) {
-    console.error(e)
-    loadingBattle.value = false;
-  }
+  });
 
 };
 
 
 const showSwapModal = ref(false);
 const activeSwapPlayer = ref(null);
-const swapPrice = ref("");
+const swapPrice = ref('0.005');
 const swapping = ref(false);
 
 const openSwap = (player) => {
   activeSwapPlayer.value = player;
-  swapPrice.value = "";
+  swapPrice.value = "0.005";
   showSwapModal.value = true;
 };
 
@@ -314,9 +308,12 @@ const loadMonsters = async() => {
       return;
     }
     let playerList = await monsterContract.listMonsters(0,5);
-   
+    let signer = window.fhevmObject.fhevmSigner;
     players.value = [];
     for(let i = 0; i < playerList.length; i++) {
+      if(playerList[i][4] == signer.address) {
+        continue;
+      }
       let tokenUri = JSON.parse(await monsterContract.tokenURI(playerList[i][5]));
       players.value.push({
         id: playerList[i][5],
