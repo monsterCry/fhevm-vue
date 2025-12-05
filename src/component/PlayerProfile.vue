@@ -510,30 +510,33 @@ const claimReward = async() => {
   });
 }
 
-const useMutationPotion = async(id)=> {
+const useMutationPotion = async(id,idx)=> {
   commonComp.commonOpt('Use Manta','Mutationing...',async()=>{
     let minterContract = window.fhevmObject.minterContract;
     let tx = await minterContract.makeMutation(id);
     await tx.wait();
     console.log(tx.hash);
+    inventory.value.slice(idx,1)
   });
 }
 
-const useEnergyPotion = async(id)=> {
+const useEnergyPotion = async(id,idx)=> {
   commonComp.commonOpt('Use Manta','Recovering...',async()=>{
     let minterContract = window.fhevmObject.minterContract;
     let tx = await minterContract.makeRecovery(id);
     await tx.wait();
     console.log(tx.hash);
+    
+    inventory.value.slice(idx,1)
   });
 }
 
 const useInventory = async(itm) => {
   console.log(itm)
   if(itm.type == 1) {
-    await useMutationPotion(itm.id);
+    await useMutationPotion(itm.id,itm.idx);
   } else if(itm.type == 2) {
-    await useEnergyPotion(itm.id);
+    await useEnergyPotion(itm.id,itm.idx);
   }
 }
 
@@ -612,6 +615,8 @@ watchEffect(async() => {
       if(mantaCount[i][0] == 1) {
         inventory.value.push({
           type:1,
+          idx: i,
+          id:mantaCount[i][1],
           count:mantaCount[i][1],
           name: "Mutation Potion",
           icon:  "🧪",
@@ -620,6 +625,8 @@ watchEffect(async() => {
       } else if(mantaCount[i][0] == 2) {
         inventory.value.push({
           type:2,
+          idx: i,
+          id:mantaCount[i][1],
           count:mantaCount[i][1],
           name: "Energy Recovery Potion",
           icon: "🔋",
